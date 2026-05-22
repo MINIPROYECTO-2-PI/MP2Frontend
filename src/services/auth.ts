@@ -8,27 +8,27 @@ import { auth } from "./firebase";
 const API_URL = "http://localhost:3000";
 const provider = new GoogleAuthProvider();
 
+export interface AuthUser {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+  username?: string;
+}
+
 export interface AuthResponse {
   message: string;
-  user: {
-    uid: string;
-    email: string;
-    displayName?: string;
-    photoURL?: string;
-    username?: string;
-  };
+  user: AuthUser;
 }
 
 export interface GoogleAuthResponse {
   isNewUser: boolean;
   message: string;
-  user: {
-    uid: string;
-    email: string;
-    displayName?: string;
-    photoURL?: string;
-    username?: string;
-  };
+  user: AuthUser;
+}
+
+export interface ErrorResponse {
+  error: string;
 }
 
 export interface RegisterData {
@@ -44,104 +44,73 @@ export interface LoginData {
   password: string;
 }
 
+export interface GoogleLoginData {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+}
+
+export interface GoogleRegisterCompleteData {
+  uid: string;
+  email: string;
+  displayName?: string;
+  photoURL?: string;
+  username: string;
+}
+
+class ApiError extends Error {
+  status?: number;
+
+  constructor(message: string, status?: number) {
+    super(message);
+    this.name = "ApiError";
+    this.status = status;
+  }
+}
+
+async function request<T>(url: string, body: object): Promise<T> {
+  const response = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(body),
+  });
+
+  const result: unknown = await response.json();
+
+  if (!response.ok) {
+    const err = result as ErrorResponse;
+    throw new ApiError(err.error || "Error en la solicitud", response.status);
+  }
+
+  return result as T;
+}
+
 export class User {
-  /**
-   * Registro normal con email y contraseña.
-   * Envía los datos al backend que crea el usuario en Firebase Auth + Firestore.
-   */
   static async register(data: RegisterData): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/register`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Error al registrar usuario");
-    }
-
-    return result;
+    return request<AuthResponse>(`${API_URL}/register`, data);
   }
 
-  /**
-   * Login normal con username o email y contraseña.
-   * El backend busca el email por username y autentica con Firebase Auth.
-   */
   static async login(data: LoginData): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Error al iniciar sesión");
-    }
-
-    return result;
+    return request<AuthResponse>(`${API_URL}/login`, data);
   }
 
-  /**
-   * Login con Google usando Firebase Auth en el frontend.
-   * Luego notifica al backend para guardar/verificar el usuario en Firestore.
-   */
   static async googleLogin(): Promise<GoogleAuthResponse> {
     const userCredential = await signInWithPopup(auth, provider);
     const firebaseUser = userCredential.user;
 
-    // Notificar al backend para guardar el usuario en Firestore si no existe
-    const response = await fetch(`${API_URL}/google-login`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        uid: firebaseUser.uid,
-        email: firebaseUser.email,
-        displayName: firebaseUser.displayName,
-        photoURL: firebaseUser.photoURL,
-      }),
+    return request<GoogleAuthResponse>(`${API_URL}/google-login`, {
+      uid: firebaseUser.uid,
+      email: firebaseUser.email,
+      displayName: firebaseUser.displayName,
+      photoURL: firebaseUser.photoURL,
     });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Error al iniciar sesión con Google");
-    }
-
-    return result;
   }
 
-  /**
-   * Completar registro de Google eligiendo un username único.
-   */
-  static async googleRegisterComplete(data: {
-    uid: string;
-    email: string;
-    displayName?: string;
-    photoURL?: string;
-    username: string;
-  }): Promise<AuthResponse> {
-    const response = await fetch(`${API_URL}/google-register-complete`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(data),
-    });
-
-    const result = await response.json();
-
-    if (!response.ok) {
-      throw new Error(result.error || "Error al completar el perfil");
-    }
-
-    return result;
+  static async googleRegisterComplete(data: GoogleRegisterCompleteData): Promise<AuthResponse> {
+    return request<AuthResponse>(`${API_URL}/google-register-complete`, data);
   }
 
-  /**
-   * Cerrar sesión.
-   */
   static async logout(): Promise<void> {
     await signOut(auth);
     await fetch(`${API_URL}/logout`, { method: "POST" });

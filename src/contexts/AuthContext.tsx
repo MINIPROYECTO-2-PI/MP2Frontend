@@ -1,21 +1,14 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged } from "firebase/auth";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { User } from "../services/auth";
-
-interface AuthUser {
-  uid: string;
-  email: string;
-  displayName?: string;
-  photoURL?: string;
-  username?: string;
-}
+import type { AuthUser } from "../services/auth";
 
 interface AuthContextType {
   user: AuthUser | null;
   loading: boolean;
   needsUsername: boolean;
-  tempGoogleUser: any | null;
+  tempGoogleUser: AuthUser | null;
   login: (userData: AuthUser) => void;
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
@@ -28,9 +21,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [user, setUser] = useState<AuthUser | null>(null);
   const [loading, setLoading] = useState(true);
   const [needsUsername, setNeedsUsername] = useState(false);
-  const [tempGoogleUser, setTempGoogleUserState] = useState<any | null>(null);
+  const [tempGoogleUser, setTempGoogleUserState] = useState<AuthUser | null>(null);
 
-  const syncGoogleUserWithBackend = async (firebaseUser: any) => {
+  const syncGoogleUserWithBackend = async (firebaseUser: FirebaseUser) => {
     try {
       const response = await fetch(`http://localhost:3000/google-login`, {
         method: "POST",
@@ -43,7 +36,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }),
       });
 
-      const result = await response.json();
+      const result: { isNewUser: boolean; user: AuthUser; error?: string } = await response.json();
 
       if (response.ok) {
         if (result.isNewUser) {
@@ -69,18 +62,15 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   };
 
   useEffect(() => {
-    // Escuchar el estado de autenticación de Firebase
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
       try {
         setLoading(true);
         if (firebaseUser) {
           await syncGoogleUserWithBackend(firebaseUser);
         } else {
-          // No hay usuario de Firebase
-          // Verificamos si hay un login manual guardado localmente
           const localUser = localStorage.getItem("meet_clone_user");
           if (localUser) {
-            setUser(JSON.parse(localUser));
+            setUser(JSON.parse(localUser) as AuthUser);
           } else {
             setUser(null);
           }
