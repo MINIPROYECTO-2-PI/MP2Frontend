@@ -1,7 +1,7 @@
 import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_URL = "https://mp2backend.onrender.com/";
+const API_URL = "https://mp2backend.onrender.com";
 const provider = new GoogleAuthProvider();
 
 export interface AuthUser {
