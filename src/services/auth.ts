@@ -1,11 +1,7 @@
-import {
-  GoogleAuthProvider,
-  signInWithPopup,
-  signOut,
-} from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_URL = "http://localhost:3000";
+const API_URL = "https://mp2backend.onrender.com/";
 const provider = new GoogleAuthProvider();
 
 export interface AuthUser {
@@ -107,7 +103,9 @@ export class User {
     });
   }
 
-  static async googleRegisterComplete(data: GoogleRegisterCompleteData): Promise<AuthResponse> {
+  static async googleRegisterComplete(
+    data: GoogleRegisterCompleteData,
+  ): Promise<AuthResponse> {
     return request<AuthResponse>(`${API_URL}/google-register-complete`, data);
   }
 
