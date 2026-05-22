@@ -1,16 +1,4 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { FcGoogle } from "react-icons/fc";
 import { doc, getDoc } from "firebase/firestore";
 import { User } from "../services/auth";
@@ -83,13 +71,17 @@ export function Login() {
     try {
       const result = await User.login({ username: username.trim(), password });
       setSuccess("¡Bienvenido! Iniciando sesión...");
-      const userData = { ...result.user, username: result.user.username || username.trim() };
+      const userData = {
+        ...result.user,
+        username: result.user.username || username.trim(),
+      };
       if (!userData.displayName && userData.uid) {
         const docSnap = await getDoc(doc(db, "users", userData.uid));
         if (docSnap.exists()) {
           const data = docSnap.data();
           if (data.name || data.surname) {
-            userData.displayName = `${data.name || ""} ${data.surname || ""}`.trim();
+            userData.displayName =
+              `${data.name || ""} ${data.surname || ""}`.trim();
           } else if (data.displayName) {
             userData.displayName = data.displayName;
           }
