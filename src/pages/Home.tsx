@@ -41,7 +41,7 @@ const Home: React.FC = () => {
               )}
               <div className="flex flex-col text-left">
                 <span className="text-xs font-semibold text-white/90 leading-tight">
-                  {user?.displayName || "Usuario"}
+                  {user?.displayName || user?.username || "Usuario"}
                 </span>
                 <span className="text-[10px] text-indigo-300 leading-none">
                   @{user?.username || "sin_usuario"}
