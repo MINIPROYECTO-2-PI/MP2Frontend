@@ -1,21 +1,18 @@
 import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardAction,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
 import { FcGoogle } from "react-icons/fc";
 import { User } from "../services/auth";
 import { useAuth } from "../contexts/AuthContext";
 import { Link, useNavigate } from "react-router-dom";
-import { LuLoaderCircle, LuUserPlus, LuEye, LuEyeOff, LuCircleAlert } from "react-icons/lu";
+import {
+  LuLoaderCircle,
+  LuEye,
+  LuEyeOff,
+  LuCircleAlert,
+  LuVideo,
+  LuUser,
+  LuMail,
+  LuLock,
+} from "react-icons/lu";
 
 interface FieldErrors {
   username?: string;
@@ -26,9 +23,73 @@ interface FieldErrors {
   confirmPassword?: string;
 }
 
+interface FieldProps {
+  id: string;
+  label: string;
+  type?: string;
+  placeholder: string;
+  icon: React.ReactNode;
+  autoComplete: string;
+  value: string;
+  onChange: (val: string) => void;
+  onBlur: () => void;
+  disabled: boolean;
+  error?: string;
+}
+
+const Field = ({
+  id,
+  label,
+  type = "text",
+  placeholder,
+  icon,
+  autoComplete,
+  value,
+  onChange,
+  onBlur,
+  disabled,
+  error,
+}: FieldProps) => (
+  <div className="flex flex-col gap-1.5">
+    <label
+      htmlFor={id}
+      className="text-[11px] uppercase tracking-wider font-medium text-white/40"
+    >
+      {label}
+    </label>
+    <div className="relative">
+      <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none">
+        {icon}
+      </span>
+      <input
+        id={id}
+        type={type}
+        placeholder={placeholder}
+        value={value}
+        onChange={(e) => onChange(e.target.value)}
+        onBlur={onBlur}
+        disabled={disabled}
+        autoComplete={autoComplete}
+        className={`w-full bg-white/[0.04] border rounded-xl py-2.5 pl-9 pr-4 text-sm text-white placeholder-white/20 outline-none transition-all focus:bg-violet-500/[0.05] focus:border-violet-500/50 ${
+          error ? "border-red-500/50" : "border-white/[0.09]"
+        }`}
+      />
+    </div>
+    {error && (
+      <span
+        className={`text-xs flex items-center gap-1 ${
+          error.includes("sugiere") ? "text-amber-400" : "text-red-400"
+        }`}
+      >
+        <LuCircleAlert size={12} /> {error}
+      </span>
+    )}
+  </div>
+);
+
 export function Register() {
   const navigate = useNavigate();
-  const { login, signInWithGoogle } = useAuth();
+  const { signInWithGoogle } = useAuth();
   const [form, setForm] = useState({
     username: "",
     name: "",
@@ -37,151 +98,107 @@ export function Register() {
     password: "",
     confirmPassword: "",
   });
-
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [loading, setLoading] = useState(false);
   const [googleLoading, setGoogleLoading] = useState(false);
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
-  
-  // Estado para los errores de cada campo individual
   const [fieldErrors, setFieldErrors] = useState<FieldErrors>({});
   const [touched, setTouched] = useState<Record<string, boolean>>({});
 
   const updateField = (field: string, value: string) => {
-    let formattedValue = value;
-    
-    // Auto-formatear nombre de usuario (quitar espacios, convertir a minúsculas)
-    if (field === "username") {
-      formattedValue = value.toLowerCase().replace(/\s+/g, "");
-    }
-
-    setForm((prev) => ({ ...prev, [field]: formattedValue }));
-    
-    // Validar en tiempo real si el campo ya ha sido tocado
-    if (touched[field]) {
-      validateSingleField(field, formattedValue);
-    }
+    const formatted =
+      field === "username" ? value.toLowerCase().replace(/\s+/g, "") : value;
+    setForm((p) => ({ ...p, [field]: formatted }));
+    if (touched[field]) validateSingleField(field, formatted);
   };
 
   const handleBlur = (field: string) => {
-    setTouched((prev) => ({ ...prev, [field]: true }));
+    setTouched((p) => ({ ...p, [field]: true }));
     validateSingleField(field, form[field as keyof typeof form]);
   };
 
   const validateSingleField = (field: string, value: string): string => {
-    let errMessage = "";
-
+    let msg = "";
     switch (field) {
       case "username":
-        if (!value.trim()) {
-          errMessage = "El nombre de usuario es requerido";
-        } else if (value.trim().length < 3) {
-          errMessage = "Debe tener al menos 3 caracteres";
-        } else if (!/^[a-zA-Z0-9_]+$/.test(value)) {
-          errMessage = "Solo se permiten letras, números y guión bajo (_)";
-        }
+        if (!value.trim()) msg = "El nombre de usuario es requerido";
+        else if (value.length < 3) msg = "Debe tener al menos 3 caracteres";
+        else if (!/^[a-zA-Z0-9_]+$/.test(value))
+          msg = "Solo letras, números y guión bajo";
         break;
       case "name":
-        if (!value.trim()) {
-          errMessage = "El nombre es requerido";
-        } else if (/\d/.test(value)) {
-          errMessage = "El nombre no puede contener números";
-        }
+        if (!value.trim()) msg = "El nombre es requerido";
+        else if (/\d/.test(value)) msg = "No puede contener números";
         break;
       case "surname":
-        if (!value.trim()) {
-          errMessage = "El apellido es requerido";
-        } else if (/\d/.test(value)) {
-          errMessage = "El apellido no puede contener números";
-        }
+        if (!value.trim()) msg = "El apellido es requerido";
+        else if (/\d/.test(value)) msg = "No puede contener números";
         break;
       case "email":
-        if (!value.trim()) {
-          errMessage = "El correo electrónico es requerido";
-        } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
-          errMessage = "Ingresa un formato de correo electrónico válido";
-        } else if (!value.toLowerCase().endsWith(".edu.co") && !value.toLowerCase().endsWith(".edu")) {
-          // Advierte/valida que sea un correo institucional
-          errMessage = "Se sugiere ingresar un correo institucional (.edu.co / .edu)";
-        }
+        if (!value.trim()) msg = "El correo es requerido";
+        else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value))
+          msg = "Formato de correo inválido";
+        else if (
+          !value.toLowerCase().endsWith(".edu.co") &&
+          !value.toLowerCase().endsWith(".edu")
+        )
+          msg = "Se sugiere un correo institucional (.edu.co / .edu)";
         break;
       case "password":
-        if (!value) {
-          errMessage = "La contraseña es requerida";
-        } else if (value.length < 6) {
-          errMessage = "Debe tener al menos 6 caracteres";
-        }
+        if (!value) msg = "La contraseña es requerida";
+        else if (value.length < 6) msg = "Mínimo 6 caracteres";
         break;
       case "confirmPassword":
-        if (!value) {
-          errMessage = "Confirma tu contraseña";
-        } else if (value !== form.password) {
-          errMessage = "Las contraseñas no coinciden";
-        }
+        if (!value) msg = "Confirma tu contraseña";
+        else if (value !== form.password) msg = "Las contraseñas no coinciden";
         break;
     }
-
-    setFieldErrors((prev) => ({ ...prev, [field]: errMessage }));
-    return errMessage;
+    setFieldErrors((p) => ({ ...p, [field]: msg }));
+    return msg;
   };
 
   const validateAll = (): boolean => {
-    const errors: FieldErrors = {};
-    let isValid = true;
-
-    // Forzar marcado de todos los campos como tocados
-    const allTouched: Record<string, boolean> = {};
-
-    Object.keys(form).forEach((key) => {
-      allTouched[key] = true;
-      const fieldError = validateSingleField(key, form[key as keyof typeof form]);
-      
-      // Considerar error real si bloquea el flujo
-      // El correo institucional puede ser sugerencia, pero si está mal el formato general, bloquea.
-      if (fieldError && (key !== "email" || !form.email.includes("@") || fieldError.includes("formato"))) {
-        errors[key as keyof FieldErrors] = fieldError;
-        isValid = false;
-      }
-    });
-
+    const allTouched = Object.fromEntries(
+      Object.keys(form).map((k) => [k, true]),
+    );
     setTouched(allTouched);
-    return isValid;
+    return Object.keys(form).every((key) => {
+      const err = validateSingleField(key, form[key as keyof typeof form]);
+      return !err || (key === "email" && err.includes("Se sugiere"));
+    });
   };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setSuccess("");
-
-    const isValid = validateAll();
-    if (!isValid) {
-      setError("Por favor corrige los campos indicados antes de continuar");
+    if (!validateAll()) {
+      setError("Por favor corrige los campos indicados");
       return;
     }
-
     setLoading(true);
     try {
-      const result = await User.register({
+      await User.register({
         username: form.username.trim(),
         password: form.password,
         email: form.email.trim(),
         name: form.name.trim(),
         surname: form.surname.trim(),
       });
-      setSuccess("¡Cuenta creada con éxito! Redirigiendo al login...");
+      setSuccess("¡Cuenta creada! Redirigiendo...");
       setTimeout(() => navigate("/"), 1500);
     } catch (err: any) {
-      if (err.message.toLowerCase().includes("usuario")) {
-        setFieldErrors((prev) => ({ ...prev, username: err.message }));
-        setError("El nombre de usuario ya está ocupado");
-      } else if (err.message.toLowerCase().includes("correo") || err.message.toLowerCase().includes("email")) {
-        setFieldErrors((prev) => ({ ...prev, email: err.message }));
-        setError("El correo electrónico ya está registrado");
-      } else {
-        setError(err.message || "Error al registrar usuario");
-      }
+      const msg = err.message || "";
+      if (msg.toLowerCase().includes("usuario"))
+        setFieldErrors((p) => ({ ...p, username: msg }));
+      else if (
+        msg.toLowerCase().includes("correo") ||
+        msg.toLowerCase().includes("email")
+      )
+        setFieldErrors((p) => ({ ...p, email: msg }));
+      setError(msg || "Error al registrar usuario");
     } finally {
       setLoading(false);
     }
@@ -192,14 +209,10 @@ export function Register() {
     setSuccess("");
     setGoogleLoading(true);
     try {
-      setSuccess("Conectando con Google...");
       await signInWithGoogle();
-      setSuccess("Autenticación exitosa, cargando perfil...");
     } catch (err: any) {
-      if (err.code === "auth/popup-closed-by-user") {
-        return;
-      }
-      setError(err.message || "Error al iniciar sesión con Google");
+      if (err.code !== "auth/popup-closed-by-user")
+        setError(err.message || "Error con Google");
     } finally {
       setGoogleLoading(false);
     }
@@ -208,262 +221,273 @@ export function Register() {
   const isDisabled = loading || googleLoading;
 
   return (
-    <div className="auth-page">
-      {/* Fondo decorativo */}
-      <div className="auth-bg">
-        <div className="auth-blob auth-blob--1" />
-        <div className="auth-blob auth-blob--2" />
-        <div className="auth-blob auth-blob--3" />
-      </div>
+    <div className="min-h-screen bg-[#0a0a0f] flex items-center justify-center p-4 relative overflow-hidden">
+      <div className="absolute w-[500px] h-[500px] rounded-full bg-indigo-600 opacity-15 blur-[80px] -top-32 -left-32 pointer-events-none" />
+      <div className="absolute w-[400px] h-[400px] rounded-full bg-violet-700 opacity-15 blur-[80px] -bottom-20 -right-20 pointer-events-none" />
 
-      <div className="auth-container">
-        {/* Logo / Branding */}
-        <div className="auth-brand">
-          <div className="auth-logo">
-            <LuUserPlus size={28} />
+      <div className="w-full max-w-[940px] flex rounded-2xl overflow-hidden border border-white/[0.07] shadow-2xl relative z-10">
+        {/* Panel izquierdo */}
+        <div className="w-[240px] flex-shrink-0 bg-gradient-to-br from-[#1e1b4b] to-[#1e1040] p-8 hidden md:flex flex-col justify-between">
+          <div className="flex items-center gap-2">
+            <div className="w-8 h-8 rounded-xl bg-violet-500/20 border border-violet-500/30 flex items-center justify-center">
+              <LuVideo size={16} className="text-violet-400" />
+            </div>
+            <span className="font-bold text-white text-base tracking-tight">
+              MeetClone
+            </span>
           </div>
-          <h1 className="auth-brand-title">MeetClone</h1>
-          <p className="auth-brand-subtitle">Crea tu cuenta y empieza</p>
+          <div className="flex flex-col gap-5">
+            <h2 className="text-2xl font-bold text-white leading-tight tracking-tight">
+              Únete y<br />
+              empieza a<br />
+              <span className="bg-gradient-to-r from-violet-400 to-blue-400 bg-clip-text text-transparent">
+                colaborar.
+              </span>
+            </h2>
+            <p className="text-xs text-white/40 leading-relaxed">
+              Crea tu cuenta y accede a videollamadas HD, salas instantáneas y
+              más.
+            </p>
+            <div className="flex flex-col gap-2">
+              {[
+                "Registro en segundos",
+                "Acceso institucional",
+                "Gratis para estudiantes",
+              ].map((f) => (
+                <div key={f} className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-violet-400 flex-shrink-0" />
+                  <span className="text-xs text-white/40">{f}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+          <span className="text-xs text-white/20">© 2026 MeetClone</span>
         </div>
 
-        <Card className="auth-card">
-          <CardHeader>
-            <CardTitle className="text-lg">Crear una cuenta</CardTitle>
-            <CardDescription>
-              Completa los datos para registrar tu perfil
-            </CardDescription>
-            <CardAction>
-              <Link to="/" className="auth-link">
-                Ya tengo cuenta
+        {/* Panel derecho */}
+        <div className="flex-1 bg-[#111118] p-8 flex flex-col gap-4 overflow-y-auto">
+          <div>
+            <h1 className="text-xl font-bold text-white tracking-tight">
+              Crear una cuenta
+            </h1>
+            <p className="text-sm text-white/35 mt-1">
+              ¿Ya tienes cuenta?{" "}
+              <Link
+                to="/"
+                className="text-violet-400 hover:text-violet-300 transition-colors"
+              >
+                Inicia sesión
               </Link>
-            </CardAction>
-          </CardHeader>
+            </p>
+          </div>
 
-          <CardContent>
-            <form id="register-form" onSubmit={handleRegister} noValidate>
-              <div className="flex flex-col gap-4">
-                {/* Mensaje de error general */}
-                {error && (
-                  <div className="auth-alert auth-alert--error" role="alert">
-                    <span className="auth-alert-icon">✕</span>
-                    {error}
-                  </div>
-                )}
-                {success && (
-                  <div className="auth-alert auth-alert--success" role="alert">
-                    <span className="auth-alert-icon">✓</span>
-                    {success}
-                  </div>
-                )}
+          <div className="h-px bg-white/[0.07]" />
 
-                {/* Input Username */}
-                <div className="grid gap-1">
-                  <Label htmlFor="register-username">Nombre de Usuario Único</Label>
-                  <Input
-                    id="register-username"
-                    type="text"
-                    placeholder="ej: jhoan_munoz"
-                    required
-                    value={form.username}
-                    onChange={(e) => updateField("username", e.target.value)}
-                    onBlur={() => handleBlur("username")}
-                    disabled={isDisabled}
-                    className={fieldErrors.username ? "border-red-500 focus:ring-red-200" : ""}
-                    autoComplete="username"
-                  />
-                  {fieldErrors.username && (
-                    <span className="text-[11px] text-red-400 flex items-center gap-1 mt-0.5 animate-fadeIn">
-                      <LuCircleAlert size={12} /> {fieldErrors.username}
-                    </span>
-                  )}
-                </div>
+          {error && (
+            <div className="flex items-center gap-2 text-xs text-red-400 bg-red-500/10 border border-red-500/20 rounded-xl px-3 py-2.5">
+              <LuCircleAlert size={13} className="flex-shrink-0" /> {error}
+            </div>
+          )}
+          {success && (
+            <div className="flex items-center gap-2 text-xs text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 rounded-xl px-3 py-2.5">
+              ✓ {success}
+            </div>
+          )}
 
-                {/* Inputs Nombres y Apellidos */}
-                <div className="auth-row">
-                  <div className="grid gap-1 flex-1">
-                    <Label htmlFor="register-name">Nombres</Label>
-                    <Input
-                      id="register-name"
-                      type="text"
-                      placeholder="Juan"
-                      required
-                      value={form.name}
-                      onChange={(e) => updateField("name", e.target.value)}
-                      onBlur={() => handleBlur("name")}
-                      disabled={isDisabled}
-                      className={fieldErrors.name ? "border-red-500 focus:ring-red-200" : ""}
-                      autoComplete="given-name"
-                    />
-                    {fieldErrors.name && (
-                      <span className="text-[11px] text-red-400 flex items-center gap-1 mt-0.5 animate-fadeIn">
-                        <LuCircleAlert size={12} /> {fieldErrors.name}
-                      </span>
-                    )}
-                  </div>
-                  
-                  <div className="grid gap-1 flex-1">
-                    <Label htmlFor="register-surname">Apellidos</Label>
-                    <Input
-                      id="register-surname"
-                      type="text"
-                      placeholder="Pérez"
-                      required
-                      value={form.surname}
-                      onChange={(e) => updateField("surname", e.target.value)}
-                      onBlur={() => handleBlur("surname")}
-                      disabled={isDisabled}
-                      className={fieldErrors.surname ? "border-red-500 focus:ring-red-200" : ""}
-                      autoComplete="family-name"
-                    />
-                    {fieldErrors.surname && (
-                      <span className="text-[11px] text-red-400 flex items-center gap-1 mt-0.5 animate-fadeIn">
-                        <LuCircleAlert size={12} /> {fieldErrors.surname}
-                      </span>
-                    )}
-                  </div>
-                </div>
-
-                {/* Input Correo */}
-                <div className="grid gap-1">
-                  <Label htmlFor="register-email">Correo Institucional</Label>
-                  <Input
-                    id="register-email"
-                    type="email"
-                    placeholder="estudiante@universidad.edu.co"
-                    required
-                    value={form.email}
-                    onChange={(e) => updateField("email", e.target.value)}
-                    onBlur={() => handleBlur("email")}
-                    disabled={isDisabled}
-                    className={
-                      fieldErrors.email 
-                        ? fieldErrors.email.includes("Se sugiere") 
-                          ? "border-amber-500 focus:ring-amber-200" 
-                          : "border-red-500 focus:ring-red-200"
-                        : ""
-                    }
-                    autoComplete="email"
-                  />
-                  {fieldErrors.email && (
-                    <span className={`text-[11px] flex items-center gap-1 mt-0.5 animate-fadeIn ${
-                      fieldErrors.email.includes("Se sugiere") ? "text-amber-400" : "text-red-400"
-                    }`}>
-                      <LuCircleAlert size={12} /> {fieldErrors.email}
-                    </span>
-                  )}
-                </div>
-
-                {/* Input Contraseña */}
-                <div className="grid gap-1">
-                  <Label htmlFor="register-password">Contraseña</Label>
-                  <div className="relative">
-                    <Input
-                      id="register-password"
-                      type={showPassword ? "text" : "password"}
-                      required
-                      placeholder="Mínimo 6 caracteres"
-                      value={form.password}
-                      onChange={(e) => updateField("password", e.target.value)}
-                      onBlur={() => handleBlur("password")}
-                      disabled={isDisabled}
-                      className={fieldErrors.password ? "border-red-500 pr-10" : "pr-10"}
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      className="auth-toggle-pw"
-                      onClick={() => setShowPassword(!showPassword)}
-                      tabIndex={-1}
-                      aria-label={showPassword ? "Ocultar" : "Mostrar"}
-                    >
-                      {showPassword ? <LuEyeOff size={16} /> : <LuEye size={16} />}
-                    </button>
-                  </div>
-                  {fieldErrors.password && (
-                    <span className="text-[11px] text-red-400 flex items-center gap-1 mt-0.5 animate-fadeIn">
-                      <LuCircleAlert size={12} /> {fieldErrors.password}
-                    </span>
-                  )}
-                </div>
-
-                {/* Input Confirmar Contraseña */}
-                <div className="grid gap-1">
-                  <Label htmlFor="register-confirm-password">Confirmar Contraseña</Label>
-                  <div className="relative">
-                    <Input
-                      id="register-confirm-password"
-                      type={showConfirm ? "text" : "password"}
-                      required
-                      placeholder="Repite tu contraseña"
-                      value={form.confirmPassword}
-                      onChange={(e) => updateField("confirmPassword", e.target.value)}
-                      onBlur={() => handleBlur("confirmPassword")}
-                      disabled={isDisabled}
-                      className={fieldErrors.confirmPassword ? "border-red-500 pr-10" : "pr-10"}
-                      autoComplete="new-password"
-                    />
-                    <button
-                      type="button"
-                      className="auth-toggle-pw"
-                      onClick={() => setShowConfirm(!showConfirm)}
-                      tabIndex={-1}
-                      aria-label={showConfirm ? "Ocultar" : "Mostrar"}
-                    >
-                      {showConfirm ? <LuEyeOff size={16} /> : <LuEye size={16} />}
-                    </button>
-                  </div>
-                  {fieldErrors.confirmPassword && (
-                    <span className="text-[11px] text-red-400 flex items-center gap-1 mt-0.5 animate-fadeIn">
-                      <LuCircleAlert size={12} /> {fieldErrors.confirmPassword}
-                    </span>
-                  )}
-                </div>
-              </div>
-            </form>
-          </CardContent>
-
-          <CardFooter className="flex-col gap-2">
-            <Button
-              type="submit"
-              form="register-form"
-              className="w-full auth-btn-primary"
+          <form
+            onSubmit={handleRegister}
+            className="flex flex-col gap-3.5"
+            noValidate
+          >
+            <Field
+              id="username"
+              label="Nombre de usuario único"
+              placeholder="ej: jhoan_munoz"
+              icon={<LuUser size={14} />}
+              autoComplete="username"
+              value={form.username}
+              onChange={(val) => updateField("username", val)}
+              onBlur={() => handleBlur("username")}
               disabled={isDisabled}
+              error={fieldErrors.username}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              <Field
+                id="name"
+                label="Nombres"
+                placeholder="Juan"
+                icon={<LuUser size={14} />}
+                autoComplete="given-name"
+                value={form.name}
+                onChange={(val) => updateField("name", val)}
+                onBlur={() => handleBlur("name")}
+                disabled={isDisabled}
+                error={fieldErrors.name}
+              />
+              <Field
+                id="surname"
+                label="Apellidos"
+                placeholder="Pérez"
+                icon={<LuUser size={14} />}
+                autoComplete="family-name"
+                value={form.surname}
+                onChange={(val) => updateField("surname", val)}
+                onBlur={() => handleBlur("surname")}
+                disabled={isDisabled}
+                error={fieldErrors.surname}
+              />
+            </div>
+
+            <Field
+              id="email"
+              label="Correo institucional"
+              type="email"
+              placeholder="estudiante@universidad.edu.co"
+              icon={<LuMail size={14} />}
+              autoComplete="email"
+              value={form.email}
+              onChange={(val) => updateField("email", val)}
+              onBlur={() => handleBlur("email")}
+              disabled={isDisabled}
+              error={fieldErrors.email}
+            />
+
+            <div className="grid grid-cols-2 gap-3">
+              {/* Password */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="password"
+                  className="text-[11px] uppercase tracking-wider font-medium text-white/40"
+                >
+                  Contraseña
+                </label>
+                <div className="relative">
+                  <LuLock
+                    size={14}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none"
+                  />
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="Mín. 6 caracteres"
+                    value={form.password}
+                    onChange={(e) => updateField("password", e.target.value)}
+                    onBlur={() => handleBlur("password")}
+                    disabled={isDisabled}
+                    autoComplete="new-password"
+                    className={`w-full bg-white/[0.04] border rounded-xl py-2.5 pl-9 pr-9 text-sm text-white placeholder-white/20 outline-none transition-all focus:bg-violet-500/[0.05] focus:border-violet-500/50 ${
+                      fieldErrors.password
+                        ? "border-red-500/50"
+                        : "border-white/[0.09]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
+                  >
+                    {showPassword ? (
+                      <LuEyeOff size={14} />
+                    ) : (
+                      <LuEye size={14} />
+                    )}
+                  </button>
+                </div>
+                {fieldErrors.password && (
+                  <span className="text-xs text-red-400 flex items-center gap-1">
+                    <LuCircleAlert size={12} /> {fieldErrors.password}
+                  </span>
+                )}
+              </div>
+
+              {/* Confirm password */}
+              <div className="flex flex-col gap-1.5">
+                <label
+                  htmlFor="confirmPassword"
+                  className="text-[11px] uppercase tracking-wider font-medium text-white/40"
+                >
+                  Confirmar contraseña
+                </label>
+                <div className="relative">
+                  <LuLock
+                    size={14}
+                    className="absolute left-3.5 top-1/2 -translate-y-1/2 text-white/25 pointer-events-none"
+                  />
+                  <input
+                    id="confirmPassword"
+                    type={showConfirm ? "text" : "password"}
+                    placeholder="Repite tu contraseña"
+                    value={form.confirmPassword}
+                    onChange={(e) =>
+                      updateField("confirmPassword", e.target.value)
+                    }
+                    onBlur={() => handleBlur("confirmPassword")}
+                    disabled={isDisabled}
+                    autoComplete="new-password"
+                    className={`w-full bg-white/[0.04] border rounded-xl py-2.5 pl-9 pr-9 text-sm text-white placeholder-white/20 outline-none transition-all focus:bg-violet-500/[0.05] focus:border-violet-500/50 ${
+                      fieldErrors.confirmPassword
+                        ? "border-red-500/50"
+                        : "border-white/[0.09]"
+                    }`}
+                  />
+                  <button
+                    type="button"
+                    tabIndex={-1}
+                    onClick={() => setShowConfirm(!showConfirm)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-white/25 hover:text-white/50 transition-colors"
+                  >
+                    {showConfirm ? <LuEyeOff size={14} /> : <LuEye size={14} />}
+                  </button>
+                </div>
+                {fieldErrors.confirmPassword && (
+                  <span className="text-xs text-red-400 flex items-center gap-1">
+                    <LuCircleAlert size={12} /> {fieldErrors.confirmPassword}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <button
+              type="submit"
+              disabled={isDisabled}
+              className="w-full py-2.5 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white text-sm font-semibold flex items-center justify-center gap-2 hover:opacity-85 transition-opacity disabled:opacity-50 mt-1"
             >
               {loading ? (
                 <>
-                  <LuLoaderCircle className="animate-spin" size={16} />
+                  <LuLoaderCircle className="animate-spin" size={15} />{" "}
                   Registrando...
                 </>
               ) : (
                 "Crear cuenta"
               )}
-            </Button>
+            </button>
+          </form>
 
-            <div className="auth-separator">
-              <span>o registrate con</span>
-            </div>
+          <div className="flex items-center gap-3">
+            <div className="flex-1 h-px bg-white/[0.07]" />
+            <span className="text-xs text-white/25">o regístrate con</span>
+            <div className="flex-1 h-px bg-white/[0.07]" />
+          </div>
 
-            <Button
-              variant="outline"
-              className="w-full"
-              onClick={handleGoogleLogin}
-              disabled={isDisabled}
-              type="button"
-            >
-              {googleLoading ? (
-                <>
-                  <LuLoaderCircle className="animate-spin" size={16} />
-                  Conectando...
-                </>
-              ) : (
-                <>
-                  <FcGoogle size={18} />
-                  Google
-                </>
-              )}
-            </Button>
-          </CardFooter>
-        </Card>
+          <button
+            onClick={handleGoogleLogin}
+            disabled={isDisabled}
+            className="w-full py-2.5 rounded-xl border border-white/[0.09] bg-white/[0.03] text-white/60 text-sm flex items-center justify-center gap-2 hover:bg-white/[0.07] transition-colors disabled:opacity-50"
+          >
+            {googleLoading ? (
+              <>
+                <LuLoaderCircle className="animate-spin" size={15} />{" "}
+                Conectando...
+              </>
+            ) : (
+              <>
+                <FcGoogle size={17} /> Continuar con Google
+              </>
+            )}
+          </button>
+        </div>
       </div>
     </div>
   );

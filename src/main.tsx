@@ -2,9 +2,10 @@ import { StrictMode } from "react";
 import { createRoot } from "react-dom/client";
 import "./index.css";
 import Login from "./pages/Login.tsx";
-import { createBrowserRouter } from "react-router";
+import { createBrowserRouter, Outlet } from "react-router";
 import { RouterProvider } from "react-router/dom";
 import { Register } from "./pages/Register.tsx";
+import SwaggerDocs from "./pages/SwaggerDocs.tsx";
 import Home from "./pages/Home.tsx";
 import Join from "./pages/Join.tsx";
 import Create from "./pages/Create.tsx";
@@ -24,6 +25,15 @@ const router = createBrowserRouter([
       {
         path: "/register",
         element: <Register />,
+      },
+    ],
+  },
+  {
+    element: <Outlet />,
+    children: [
+      {
+        path: "/docs",
+        element: <SwaggerDocs />,
       },
     ],
   },
