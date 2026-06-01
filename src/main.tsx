@@ -8,6 +8,9 @@ import { Register } from "./pages/Register.tsx";
 import Home from "./pages/Home.tsx";
 import Join from "./pages/Join.tsx";
 import Create from "./pages/Create.tsx";
+import Profile from "./pages/Profile.tsx";
+import Dashboard from "./pages/Dashboard.tsx";
+import Room from "./pages/Room.tsx";
 import ChooseUsername from "./pages/ChooseUsername.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { ProtectedRoute, PublicRoute, UsernameRequiredRoute } from "./components/AuthRoutes.tsx";
@@ -52,6 +55,18 @@ const router = createBrowserRouter([
       {
         path: "/create",
         element: <Create />,
+      },
+      {
+        path: "/profile",
+        element: <Profile />,
+      },
+      {
+        path: "/dashboard",
+        element: <Dashboard />,
+      },
+      {
+        path: "/room/:roomId",
+        element: <Room />,
       },
     ],
   },

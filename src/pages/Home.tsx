@@ -1,6 +1,6 @@
 import React from "react";
 import { useAuth } from "../contexts/AuthContext";
-import { LuLogOut, LuVideo, LuPlus, LuUser } from "react-icons/lu";
+import { LuLogOut, LuVideo, LuPlus, LuUser, LuLayoutDashboard } from "react-icons/lu";
 
 const Home: React.FC = () => {
   const { user, logout } = useAuth();
@@ -27,7 +27,10 @@ const Home: React.FC = () => {
 
           <div className="flex items-center gap-5">
             {/* Info de Perfil de Usuario */}
-            <div className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-3 pr-4 py-1.5 shadow-inner">
+            <a
+              href="/profile"
+              className="flex items-center gap-3 bg-white/5 border border-white/10 rounded-full pl-3 pr-4 py-1.5 shadow-inner hover:bg-white/10 hover:border-white/20 transition-all duration-200 cursor-pointer no-underline"
+            >
               {user?.photoURL ? (
                 <img
                   src={user.photoURL}
@@ -47,7 +50,7 @@ const Home: React.FC = () => {
                   @{user?.username || "sin_usuario"}
                 </span>
               </div>
-            </div>
+            </a>
 
             {/* Botón Logout Premium */}
             <button
@@ -90,11 +93,11 @@ const Home: React.FC = () => {
             </a>
             
             <a
-              href="/create"
+              href="/dashboard"
               className="flex items-center justify-center gap-2 px-6 py-3.5 bg-gradient-to-r from-indigo-500 to-purple-600 hover:opacity-95 text-white rounded-xl font-medium transition-all duration-200 hover:-translate-y-0.5 shadow-lg shadow-indigo-500/20"
             >
-              <LuVideo size={18} />
-              Crear una Reunión Nueva
+              <LuLayoutDashboard size={18} />
+              Mis Salas de Estudio
             </a>
           </div>
         </div>

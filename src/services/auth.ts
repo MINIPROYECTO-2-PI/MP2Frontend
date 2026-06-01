@@ -1,7 +1,7 @@
-import { GoogleAuthProvider, signInWithPopup, signOut } from "firebase/auth";
+import { GoogleAuthProvider, signInWithPopup, signOut, deleteUser as deleteFirebaseAuthUser } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_URL = "https://mp2backend.onrender.com";
+const API_URL = "http://localhost:3000";
 const provider = new GoogleAuthProvider();
 
 export interface AuthUser {
@@ -12,9 +12,25 @@ export interface AuthUser {
   username?: string;
 }
 
+export interface UserProfile {
+  uid: string;
+  username: string;
+  email: string;
+  name: string;
+  surname: string;
+  avatar: string;
+  provider?: string;
+  createdAt?: string;
+}
+
 export interface AuthResponse {
   message: string;
   user: AuthUser;
+}
+
+export interface ProfileResponse {
+  message: string;
+  profile: UserProfile;
 }
 
 export interface GoogleAuthResponse {
@@ -55,6 +71,33 @@ export interface GoogleRegisterCompleteData {
   username: string;
 }
 
+export interface UpdateProfileData {
+  name?: string;
+  surname?: string;
+  username?: string;
+  email?: string;
+  avatar?: string;
+}
+
+export interface RoomData {
+  id: string;
+  roomId: string;
+  name: string;
+  hostUid: string;
+  hostUsername: string;
+  createdAt: string;
+}
+
+export interface RoomResponse {
+  message: string;
+  room: RoomData;
+}
+
+export interface RoomsListResponse {
+  message: string;
+  rooms: RoomData[];
+}
+
 class ApiError extends Error {
   status?: number;
 
@@ -65,21 +108,76 @@ class ApiError extends Error {
   }
 }
 
-async function request<T>(url: string, body: object): Promise<T> {
-  const response = await fetch(url, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(body),
-  });
-
-  const result: unknown = await response.json();
+async function handleResponse<T>(response: Response): Promise<T> {
+  const contentType = response.headers.get("content-type");
+  let result: any;
+  
+  if (contentType && contentType.includes("application/json")) {
+    result = await response.json();
+  } else {
+    const text = await response.text();
+    result = { error: text || `Error de servidor (Estado: ${response.status})` };
+  }
 
   if (!response.ok) {
-    const err = result as ErrorResponse;
-    throw new ApiError(err.error || "Error en la solicitud", response.status);
+    throw new ApiError(result.error || "Error en la solicitud", response.status);
   }
 
   return result as T;
+}
+
+async function request<T>(url: string, body: object): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return await handleResponse<T>(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+  }
+}
+
+async function requestGet<T>(url: string): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await handleResponse<T>(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+  }
+}
+
+async function requestPut<T>(url: string, body: object): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(body),
+    });
+    return await handleResponse<T>(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+  }
+}
+
+async function requestDelete<T>(url: string): Promise<T> {
+  try {
+    const response = await fetch(url, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+    });
+    return await handleResponse<T>(response);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+  }
 }
 
 export class User {
@@ -112,5 +210,40 @@ export class User {
   static async logout(): Promise<void> {
     await signOut(auth);
     await fetch(`${API_URL}/logout`, { method: "POST" });
+  }
+
+  // US-04: Profile
+  static async getProfile(uid: string): Promise<ProfileResponse> {
+    return requestGet<ProfileResponse>(`${API_URL}/profile/${uid}`);
+  }
+
+  static async updateProfile(uid: string, data: UpdateProfileData): Promise<ProfileResponse> {
+    return requestPut<ProfileResponse>(`${API_URL}/profile/${uid}`, data);
+  }
+
+  // US-05: Delete Account
+  static async deleteAccount(uid: string): Promise<{ message: string }> {
+    const result = await requestDelete<{ message: string }>(`${API_URL}/profile/${uid}`);
+    // Also delete from Firebase Auth on client side
+    const currentUser = auth.currentUser;
+    if (currentUser) {
+      try {
+        await deleteFirebaseAuthUser(currentUser);
+      } catch {
+        // If Firebase Auth deletion fails on client, the backend already cleaned Firestore
+        console.warn("Firebase Auth user deletion handled by backend");
+      }
+    }
+    await signOut(auth).catch(() => {});
+    return result;
+  }
+
+  // US-06: Rooms
+  static async createRoom(data: { name: string; hostUid: string; hostUsername: string }): Promise<RoomResponse> {
+    return request<RoomResponse>(`${API_URL}/rooms`, data);
+  }
+
+  static async getRooms(uid: string): Promise<RoomsListResponse> {
+    return requestGet<RoomsListResponse>(`${API_URL}/rooms/${uid}`);
   }
 }

@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "../services/firebase";
 import { User } from "../services/auth";
-import type { AuthUser } from "../services/auth";
+import type { AuthUser, UpdateProfileData } from "../services/auth";
 
 interface AuthContextType {
   user: AuthUser | null;
@@ -13,6 +13,8 @@ interface AuthContextType {
   logout: () => Promise<void>;
   signInWithGoogle: () => Promise<void>;
   completeGoogleProfile: (username: string) => Promise<void>;
+  updateUser: (updates: UpdateProfileData) => Promise<void>;
+  deleteAccount: () => Promise<void>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -146,6 +148,31 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     login(result.user);
   };
 
+  const updateUser = async (updates: UpdateProfileData) => {
+    if (!user) throw new Error("No hay usuario autenticado");
+
+    const result = await User.updateProfile(user.uid, updates);
+    const updatedUser: AuthUser = {
+      uid: result.profile.uid,
+      email: result.profile.email,
+      displayName: `${result.profile.name} ${result.profile.surname}`,
+      photoURL: result.profile.avatar,
+      username: result.profile.username,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("meet_clone_user", JSON.stringify(updatedUser));
+  };
+
+  const deleteAccount = async () => {
+    if (!user) throw new Error("No hay usuario autenticado");
+
+    await User.deleteAccount(user.uid);
+    setUser(null);
+    localStorage.removeItem("meet_clone_user");
+    setNeedsUsername(false);
+    setTempGoogleUserState(null);
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -157,6 +184,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         logout,
         signInWithGoogle,
         completeGoogleProfile,
+        updateUser,
+        deleteAccount,
       }}
     >
       {children}
