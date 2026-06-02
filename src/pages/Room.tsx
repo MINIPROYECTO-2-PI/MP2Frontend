@@ -1,7 +1,12 @@
 import React, { useEffect, useState, useRef } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
-import { io, Socket } from "socket.io-client";
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+  type Socket,
+} from "../services/socket";
 import {
   LuUsers,
   LuMessageSquare,
@@ -41,12 +46,12 @@ const Room: React.FC = () => {
   const [errorMsg, setErrorMsg] = useState("");
   const [roomName, setRoomName] = useState("");
   const [hostUid, setHostUid] = useState("");
-  
+
   // Real-time states
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  
+
   // UI Controls (Simulated Video/Audio states for premium feel)
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
@@ -66,8 +71,8 @@ const Room: React.FC = () => {
       return;
     }
 
-    // Connect to WebSocket server running on port 3001
-    const socket = io("http://localhost:3001");
+    // Connect to WebSocket server via centralized singleton
+    const socket = connectSocket();
     socketRef.current = socket;
 
     // Join room event
@@ -77,19 +82,28 @@ const Room: React.FC = () => {
       uid: user.uid,
     });
 
-    // 1. Connection successful
-    socket.on("room-joined-success", (data: {
-      roomId: string;
-      roomName: string;
-      hostUid: string;
-      activeUsers: ActiveUser[];
-    }) => {
-      setRoomName(data.roomName);
-      setHostUid(data.hostUid);
-      setActiveUsers(data.activeUsers);
-      setIsValidating(false);
-      setLoading(false);
+    socket.on("delete-room", (data: { roomId: string; message: string }) => {
+      const { roomId, message } = data;
+
+      alert(message);
     });
+
+    // 1. Connection successful
+    socket.on(
+      "room-joined-success",
+      (data: {
+        roomId: string;
+        roomName: string;
+        hostUid: string;
+        activeUsers: ActiveUser[];
+      }) => {
+        setRoomName(data.roomName);
+        setHostUid(data.hostUid);
+        setActiveUsers(data.activeUsers);
+        setIsValidating(false);
+        setLoading(false);
+      },
+    );
 
     // 2. Room is invalid
     socket.on("room-invalid", (msg: string) => {
@@ -109,40 +123,38 @@ const Room: React.FC = () => {
     });
 
     // 5. Another user joins
-    socket.on("user-joined", (data: {
-      username: string;
-      uid: string;
-      activeUsers: ActiveUser[];
-    }) => {
-      setActiveUsers(data.activeUsers);
-      // Append a system message
-      const systemMsg: ChatMessage = {
-        id: `sys-${Date.now()}`,
-        senderUid: "system",
-        senderUsername: "MeetClone",
-        text: `@${data.username} se ha unido a la sala de estudio`,
-        createdAt: new Date(),
-      };
-      setMessages((prev) => [...prev, systemMsg]);
-    });
+    socket.on(
+      "user-joined",
+      (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
+        setActiveUsers(data.activeUsers);
+        // Append a system message
+        const systemMsg: ChatMessage = {
+          id: `sys-${Date.now()}`,
+          senderUid: "system",
+          senderUsername: "MeetClone",
+          text: `@${data.username} se ha unido a la sala de estudio`,
+          createdAt: new Date(),
+        };
+        setMessages((prev) => [...prev, systemMsg]);
+      },
+    );
 
     // 6. User leaves
-    socket.on("user-left", (data: {
-      username: string;
-      uid: string;
-      activeUsers: ActiveUser[];
-    }) => {
-      setActiveUsers(data.activeUsers);
-      // Append a system message
-      const systemMsg: ChatMessage = {
-        id: `sys-${Date.now()}`,
-        senderUid: "system",
-        senderUsername: "MeetClone",
-        text: `@${data.username} ha salido de la sala`,
-        createdAt: new Date(),
-      };
-      setMessages((prev) => [...prev, systemMsg]);
-    });
+    socket.on(
+      "user-left",
+      (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
+        setActiveUsers(data.activeUsers);
+        // Append a system message
+        const systemMsg: ChatMessage = {
+          id: `sys-${Date.now()}`,
+          senderUid: "system",
+          senderUsername: "MeetClone",
+          text: `@${data.username} ha salido de la sala`,
+          createdAt: new Date(),
+        };
+        setMessages((prev) => [...prev, systemMsg]);
+      },
+    );
 
     // 7. Receives new text message
     socket.on("receive-message", (msg: ChatMessage) => {
@@ -151,7 +163,14 @@ const Room: React.FC = () => {
 
     // Cleanup on unmount
     return () => {
-      socket.disconnect();
+      socket.off("room-joined-success");
+      socket.off("room-invalid");
+      socket.off("error-msg");
+      socket.off("room-history");
+      socket.off("user-joined");
+      socket.off("user-left");
+      socket.off("receive-message");
+      disconnectSocket();
     };
   }, [roomId, user, navigate]);
 
@@ -207,7 +226,10 @@ const Room: React.FC = () => {
           <LuVideoOff size={48} className="room-error-icon" />
           <h2>Acceso Denegado</h2>
           <p>{errorMsg}</p>
-          <button onClick={() => navigate("/dashboard")} className="room-error-btn">
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="room-error-btn"
+          >
             Volver al Dashboard
           </button>
         </div>
@@ -232,7 +254,11 @@ const Room: React.FC = () => {
             <h1 className="room-name-text">{roomName}</h1>
             <div className="room-badge-row">
               <span className="room-id-badge">ID: {roomId}</span>
-              <button onClick={copyRoomId} className="room-copy-btn" title="Copiar ID de Sala">
+              <button
+                onClick={copyRoomId}
+                className="room-copy-btn"
+                title="Copiar ID de Sala"
+              >
                 {copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
               </button>
             </div>
@@ -260,18 +286,30 @@ const Room: React.FC = () => {
                   <div className="room-avatar-glowing">
                     <LuSparkles size={40} className="glowing-sparkle" />
                   </div>
-                  <span className="room-stream-placeholder">Cámara activa (Transmitiendo en tiempo real)</span>
+                  <span className="room-stream-placeholder">
+                    Cámara activa (Transmitiendo en tiempo real)
+                  </span>
                 </div>
               ) : (
                 <div className="room-video-placeholder">
                   {user?.photoURL ? (
-                    <img src={user.photoURL} alt="Tú" className="room-video-avatar" />
+                    <img
+                      src={user.photoURL}
+                      alt="Tú"
+                      className="room-video-avatar"
+                    />
                   ) : (
                     <div className="room-video-avatar-fallback">
-                      {user?.displayName ? user.displayName.charAt(0).toUpperCase() : <LuUser size={40} />}
+                      {user?.displayName ? (
+                        user.displayName.charAt(0).toUpperCase()
+                      ) : (
+                        <LuUser size={40} />
+                      )}
                     </div>
                   )}
-                  <span className="room-video-name">@{user?.username || "tú"} (Tú)</span>
+                  <span className="room-video-name">
+                    @{user?.username || "tú"} (Tú)
+                  </span>
                   <span className="room-status-sub">Cámara Apagada</span>
                 </div>
               )}
@@ -279,7 +317,9 @@ const Room: React.FC = () => {
               {/* Status Pills */}
               <div className="room-participant-labels">
                 <span className="participant-badge-name">Tú</span>
-                {!isMicOn && <span className="participant-badge-muted">Silenciado</span>}
+                {!isMicOn && (
+                  <span className="participant-badge-muted">Silenciado</span>
+                )}
               </div>
             </div>
           </div>
@@ -325,7 +365,9 @@ const Room: React.FC = () => {
                   </div>
                   <div className="user-item-details">
                     <span className="user-item-name">@{u.username}</span>
-                    {u.uid === hostUid && <span className="user-item-badge">Anfitrión</span>}
+                    {u.uid === hostUid && (
+                      <span className="user-item-badge">Anfitrión</span>
+                    )}
                   </div>
                 </div>
               ))}
@@ -359,8 +401,15 @@ const Room: React.FC = () => {
                   }
 
                   return (
-                    <div key={msg.id} className={`chat-msg ${isMe ? "chat-msg--me" : "chat-msg--other"}`}>
-                      {!isMe && <span className="chat-msg-username">@{msg.senderUsername}</span>}
+                    <div
+                      key={msg.id}
+                      className={`chat-msg ${isMe ? "chat-msg--me" : "chat-msg--other"}`}
+                    >
+                      {!isMe && (
+                        <span className="chat-msg-username">
+                          @{msg.senderUsername}
+                        </span>
+                      )}
                       <div className="chat-msg-bubble">
                         <p>{msg.text}</p>
                       </div>
@@ -380,7 +429,11 @@ const Room: React.FC = () => {
                 className="chat-input-field"
                 maxLength={400}
               />
-              <button type="submit" disabled={!newMessage.trim()} className="chat-submit-btn">
+              <button
+                type="submit"
+                disabled={!newMessage.trim()}
+                className="chat-submit-btn"
+              >
                 <LuSend size={16} />
               </button>
             </form>

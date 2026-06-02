@@ -1,9 +1,15 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useAuth } from "../contexts/AuthContext";
 import { User } from "../services/auth";
 import type { RoomData } from "../services/auth";
 import { useNavigate } from "react-router-dom";
 import { MdDelete } from "react-icons/md";
+import {
+  connectSocket,
+  disconnectSocket,
+  getSocket,
+  type Socket,
+} from "../services/socket";
 import {
   LuVideo,
   LuPlus,
@@ -21,10 +27,13 @@ import {
   LuShieldAlert,
   LuTrash2,
 } from "react-icons/lu";
+import { FaEdit } from "react-icons/fa";
 
 const Dashboard: React.FC = () => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
+  const socketRef = useRef<Socket | null>(null);
+  const userRef = useRef(user);
 
   const [rooms, setRooms] = useState<RoomData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -36,9 +45,54 @@ const Dashboard: React.FC = () => {
   const [copiedId, setCopiedId] = useState<string | null>(null);
   const [deleteRoom, setDeleteRoom] = useState(false);
   const [deleting, setDeleting] = useState(false);
+  const [roomDeleted, setRoomDeleted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
   const handleDeleteRoom = () => {
     setDeleteRoom(!deleteRoom);
   };
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+  const socketDeleteRoom = () => {
+    if (!roomToDelete || !socketRef.current) return;
+    console.log("¿Conectado?", socketRef.current.connected);
+    setDeleting(true);
+    socketRef.current?.emit("delete-room", {
+      roomId: roomToDelete,
+      uid: user!.uid,
+    });
+    console.log(roomToDelete, user!.uid);
+  };
+  useEffect(() => {
+    socketRef.current = connectSocket();
+
+    socketRef.current.on(
+      "room-deleted",
+      (data: { roomId: string; message: string; uid: string }) => {
+        console.log("userRef.uid:", userRef.current?.uid); // ✅ ya no es stale
+        console.log("data.uid:", data.uid);
+        const isHost = userRef.current?.uid === data.uid; // ✅
+        setIsAdmin(isHost);
+        setDeleteRoom(false);
+        setRoomDeleted(true);
+        setDeleting(false);
+
+        setRooms((prev) => prev.filter((room) => room.roomId !== data.roomId));
+
+        setTimeout(() => {
+          setRoomDeleted(false);
+        }, 3000);
+
+        const { roomId, message } = data;
+      },
+    );
+    return () => {
+      socketRef.current?.off("room-deleted");
+      disconnectSocket();
+    };
+  }, []);
   const fetchRooms = async () => {
     try {
       setLoading(true);
@@ -201,6 +255,39 @@ const Dashboard: React.FC = () => {
             </div>
           )}
 
+          {roomDeleted &&
+            (isAdmin ? (
+              <div className="room-status-page">
+                <div className="auth-bg">
+                  <div className="auth-blob auth-blob--1" />
+                  <div className="auth-blob auth-blob--2" />
+                </div>
+                <div className="room-status-card">
+                  <LuLoaderCircle className="room-spinner" size={48} />
+                  <h2>Sala eliminada</h2>
+                  <p>
+                    Haz eliminado la sala, todas las personas que se encontraban
+                    en ella han sido desconectadas inmediatamente
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="room-status-page">
+                <div className="auth-bg">
+                  <div className="auth-blob auth-blob--1" />
+                  <div className="auth-blob auth-blob--2" />
+                </div>
+                <div className="room-status-card">
+                  <LuLoaderCircle className="room-spinner" size={48} />
+                  <h2>Sala eliminada</h2>
+                  <p>
+                    Sala eliminada por el administrador, por favor contacte a la
+                    persona responsable de la sala
+                  </p>
+                </div>
+              </div>
+            ))}
+
           {/* Create Room Form */}
           {showCreateForm && (
             <div className="dashboard-create-card">
@@ -287,13 +374,21 @@ const Dashboard: React.FC = () => {
             <div className="dashboard-rooms-grid">
               {rooms.map((room) => (
                 <div key={room.id} className="dashboard-room-card">
-                  <div className="dashboard-room-header">
-                    <div className="dashboard-room-icon">
-                      <LuVideo size={20} />
+                  <div className="dashboard-room-header flex justify-between">
+                    <div className="flex gap-4">
+                      <div className="dashboard-room-icon">
+                        <LuVideo size={20} />
+                      </div>
+                      <div className="dashboard-room-meta">
+                        <h3 className="dashboard-room-name">{room.name}</h3>
+                        <span className="dashboard-room-role">
+                          Administrador
+                        </span>
+                      </div>
                     </div>
-                    <div className="dashboard-room-meta">
-                      <h3 className="dashboard-room-name">{room.name}</h3>
-                      <span className="dashboard-room-role">Administrador</span>
+
+                    <div className=" rounded-lg dashboard-room-enter !w-[10%]">
+                      <FaEdit size={20} color="white"/>
                     </div>
                   </div>
                   <div className="dashboard-room-details">
@@ -328,6 +423,7 @@ const Dashboard: React.FC = () => {
                     <button
                       onClick={() => {
                         setDeleteRoom(true);
+                        setRoomToDelete(room.roomId);
                       }}
                       className="dashboard-logout-btn"
                     >
@@ -357,7 +453,9 @@ const Dashboard: React.FC = () => {
 
                 <div className="profile-modal-actions">
                   <button
-                    onClick={() => {}}
+                    onClick={() => {
+                      socketDeleteRoom();
+                    }}
                     className="profile-btn profile-btn--confirm-delete"
                   >
                     {deleting ? (
@@ -373,6 +471,7 @@ const Dashboard: React.FC = () => {
                   <button
                     onClick={() => {
                       setDeleteRoom(false);
+                      setRoomToDelete(null);
                     }}
                     disabled={deleting}
                     className="profile-btn profile-btn--cancel-modal"
