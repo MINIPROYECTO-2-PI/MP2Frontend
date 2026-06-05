@@ -1,6 +1,6 @@
 import { io, type Socket } from "socket.io-client";
 
-const SOCKET_URL = "http://localhost:3001";
+const SOCKET_URL = "https://backendrealtime.onrender.com";
 
 let socket: Socket | null = null;
 
