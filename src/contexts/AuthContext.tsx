@@ -27,16 +27,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const syncGoogleUserWithBackend = async (firebaseUser: FirebaseUser) => {
     try {
-      const response = await fetch(`http://localhost:3000/google-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-        }),
-      });
+      const response = await fetch(
+        `https://mp2backend.onrender.com/google-login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          }),
+        },
+      );
 
       const result: { isNewUser: boolean; user: AuthUser; error?: string } = await response.json();
 
