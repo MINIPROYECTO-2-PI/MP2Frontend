@@ -1,4 +1,9 @@
-import { GoogleAuthProvider, signInWithPopup, signOut, deleteUser as deleteFirebaseAuthUser } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  deleteUser as deleteFirebaseAuthUser,
+} from "firebase/auth";
 import { auth } from "./firebase";
 
 const API_URL = "http://localhost:3000";
@@ -111,16 +116,21 @@ class ApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type");
   let result: any;
-  
+
   if (contentType && contentType.includes("application/json")) {
     result = await response.json();
   } else {
     const text = await response.text();
-    result = { error: text || `Error de servidor (Estado: ${response.status})` };
+    result = {
+      error: text || `Error de servidor (Estado: ${response.status})`,
+    };
   }
 
   if (!response.ok) {
-    throw new ApiError(result.error || "Error en la solicitud", response.status);
+    throw new ApiError(
+      result.error || "Error en la solicitud",
+      response.status,
+    );
   }
 
   return result as T;
@@ -136,7 +146,9 @@ async function request<T>(url: string, body: object): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -149,7 +161,9 @@ async function requestGet<T>(url: string): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -163,7 +177,9 @@ async function requestPut<T>(url: string, body: object): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -176,7 +192,9 @@ async function requestDelete<T>(url: string): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -187,6 +205,15 @@ export class User {
 
   static async login(data: LoginData): Promise<AuthResponse> {
     return request<AuthResponse>(`${API_URL}/login`, data);
+  }
+
+  static async updateRoomName(data: {
+    name: string;
+    newName: string;
+    hostUid: string;
+    roomId: string;
+  }): Promise<{ message: string }> {
+    return request<{ message: string }>(`${API_URL}/change-room-name`, data);
   }
 
   static async googleLogin(): Promise<GoogleAuthResponse> {
@@ -217,13 +244,18 @@ export class User {
     return requestGet<ProfileResponse>(`${API_URL}/profile/${uid}`);
   }
 
-  static async updateProfile(uid: string, data: UpdateProfileData): Promise<ProfileResponse> {
+  static async updateProfile(
+    uid: string,
+    data: UpdateProfileData,
+  ): Promise<ProfileResponse> {
     return requestPut<ProfileResponse>(`${API_URL}/profile/${uid}`, data);
   }
 
   // US-05: Delete Account
   static async deleteAccount(uid: string): Promise<{ message: string }> {
-    const result = await requestDelete<{ message: string }>(`${API_URL}/profile/${uid}`);
+    const result = await requestDelete<{ message: string }>(
+      `${API_URL}/profile/${uid}`,
+    );
     // Also delete from Firebase Auth on client side
     const currentUser = auth.currentUser;
     if (currentUser) {
@@ -239,7 +271,11 @@ export class User {
   }
 
   // US-06: Rooms
-  static async createRoom(data: { name: string; hostUid: string; hostUsername: string }): Promise<RoomResponse> {
+  static async createRoom(data: {
+    name: string;
+    hostUid: string;
+    hostUsername: string;
+  }): Promise<RoomResponse> {
     return request<RoomResponse>(`${API_URL}/rooms`, data);
   }
 

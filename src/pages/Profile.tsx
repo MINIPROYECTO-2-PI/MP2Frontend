@@ -19,7 +19,7 @@ import {
 } from "react-icons/lu";
 
 const Profile: React.FC = () => {
-  const { user, updateUser, deleteAccount, logout } = useAuth();
+  const { user, updateUser, deleteAccount} = useAuth();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);

@@ -3,11 +3,11 @@ import { useAuth } from "../contexts/AuthContext";
 import { User } from "../services/auth";
 import type { RoomData } from "../services/auth";
 import { useNavigate } from "react-router-dom";
-import { MdDelete } from "react-icons/md";
+import { MdDelete, MdCancel } from "react-icons/md";
 import {
   connectSocket,
   disconnectSocket,
-  getSocket,
+ 
   type Socket,
 } from "../services/socket";
 import {
@@ -47,14 +47,20 @@ const Dashboard: React.FC = () => {
   const [deleting, setDeleting] = useState(false);
   const [roomDeleted, setRoomDeleted] = useState(false);
   const [isAdmin, setIsAdmin] = useState(false);
-  const handleDeleteRoom = () => {
-    setDeleteRoom(!deleteRoom);
-  };
+
+  // ✅ FIX: estados independientes por sala
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [editingRoomName, setEditingRoomName] = useState("");
+  const [updatingName, setUpdatingName] = useState(false);
+
+
 
   useEffect(() => {
     userRef.current = user;
   }, [user]);
+
   const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+
   const socketDeleteRoom = () => {
     if (!roomToDelete || !socketRef.current) return;
     console.log("¿Conectado?", socketRef.current.connected);
@@ -65,15 +71,16 @@ const Dashboard: React.FC = () => {
     });
     console.log(roomToDelete, user!.uid);
   };
+
   useEffect(() => {
     socketRef.current = connectSocket();
 
     socketRef.current.on(
       "room-deleted",
       (data: { roomId: string; message: string; uid: string }) => {
-        console.log("userRef.uid:", userRef.current?.uid); // ✅ ya no es stale
+        console.log("userRef.uid:", userRef.current?.uid);
         console.log("data.uid:", data.uid);
-        const isHost = userRef.current?.uid === data.uid; // ✅
+        const isHost = userRef.current?.uid === data.uid;
         setIsAdmin(isHost);
         setDeleteRoom(false);
         setRoomDeleted(true);
@@ -85,7 +92,7 @@ const Dashboard: React.FC = () => {
           setRoomDeleted(false);
         }, 3000);
 
-        const { roomId, message } = data;
+     
       },
     );
     return () => {
@@ -93,6 +100,7 @@ const Dashboard: React.FC = () => {
       disconnectSocket();
     };
   }, []);
+
   const fetchRooms = async () => {
     try {
       setLoading(true);
@@ -104,6 +112,7 @@ const Dashboard: React.FC = () => {
       setLoading(false);
     }
   };
+
   useEffect(() => {
     if (user?.uid) {
       fetchRooms();
@@ -138,6 +147,42 @@ const Dashboard: React.FC = () => {
       setTimeout(() => setErrorMsg(""), 5000);
     } finally {
       setCreating(false);
+    }
+  };
+
+  // ✅ FIX: handler dedicado para editar nombre, recibe roomId
+  const handleEditName = async (e: React.FormEvent, roomId: string) => {
+    e.preventDefault();
+    if (!editingRoomName.trim()) return;
+
+    const currentRoom = rooms.find((r) => r.roomId === roomId);
+    if (!currentRoom) return;
+
+    setUpdatingName(true);
+    try {
+      await User.updateRoomName({
+        name: currentRoom.name,
+        newName: editingRoomName.trim(),
+        hostUid: user!.uid,
+        roomId: roomId,
+      });
+
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.roomId === roomId ? { ...r, name: editingRoomName.trim() } : r,
+        ),
+      );
+      setSuccessMsg("¡Nombre de sala actualizado!");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Error al actualizar nombre",
+      );
+      setTimeout(() => setErrorMsg(""), 5000);
+    } finally {
+      setUpdatingName(false);
+      setEditingRoomId(null);
+      setEditingRoomName("");
     }
   };
 
@@ -176,7 +221,6 @@ const Dashboard: React.FC = () => {
           </div>
 
           <div className="dashboard-nav-right">
-            {/* Profile Link */}
             <button
               onClick={() => navigate("/profile")}
               className="dashboard-profile-chip"
@@ -372,25 +416,104 @@ const Dashboard: React.FC = () => {
             </div>
           ) : (
             <div className="dashboard-rooms-grid">
-              {rooms.map((room) => (
-                <div key={room.id} className="dashboard-room-card">
-                  <div className="dashboard-room-header flex justify-between">
-                    <div className="flex gap-4">
-                      <div className="dashboard-room-icon">
-                        <LuVideo size={20} />
-                      </div>
+              {rooms.map((room) => {
+                const isEditing = editingRoomId === room.id;
+                return (
+                <div
+                  key={room.id}
+                  className={`dashboard-room-card${isEditing ? " dashboard-room-card--editing" : ""}`}
+                >
+                  {/* ── Header: icono + nombre (inline edit) + botón editar ── */}
+                  <div className="dashboard-room-header">
+                    <div className="dashboard-room-icon">
+                      <LuVideo size={20} />
+                    </div>
+
+                    {isEditing ? (
+                      /* Modo edición inline */
+                      <form
+                        onSubmit={(e) => handleEditName(e, room.roomId)}
+                        className="dashboard-room-edit-form"
+                      >
+                        <div className="dashboard-room-edit-input-wrap">
+                            <input
+                              type="text"
+                              value={editingRoomName}
+                              onChange={(e) => setEditingRoomName(e.target.value)}
+                              placeholder="Nombre de la sala"
+                              className="dashboard-room-edit-input"
+                              maxLength={50}
+                              autoFocus
+                              disabled={updatingName}
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape" && !updatingName) {
+                                  setEditingRoomId(null);
+                                  setEditingRoomName("");
+                                }
+                              }}
+                            />
+                            <span className="dashboard-room-edit-counter">
+                              {editingRoomName.length}/50
+                            </span>
+                          </div>
+                          <div className="dashboard-room-edit-actions">
+                            <button
+                              type="submit"
+                              disabled={!editingRoomName.trim() || updatingName}
+                              className="dashboard-room-edit-confirm"
+                              title="Guardar (Enter)"
+                            >
+                              {updatingName ? (
+                                <LuLoaderCircle
+                                  size={15}
+                                  className="profile-btn-spinner"
+                                />
+                              ) : (
+                                <LuCheck size={15} />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingRoomId(null);
+                                setEditingRoomName("");
+                              }}
+                              disabled={updatingName}
+                              className="dashboard-room-edit-cancel"
+                              title="Cancelar (Esc)"
+                            >
+                              <MdCancel size={15} />
+                            </button>
+                          </div>
+                      </form>
+                    ) : (
+                      /* Modo lectura */
                       <div className="dashboard-room-meta">
                         <h3 className="dashboard-room-name">{room.name}</h3>
                         <span className="dashboard-room-role">
                           Administrador
                         </span>
                       </div>
-                    </div>
+                    )}
 
-                    <div className=" rounded-lg dashboard-room-enter !w-[10%]">
-                      <FaEdit size={20} color="white"/>
-                    </div>
+                    {/* Botón editar — siempre visible, se oculta mientras edita */}
+                    {!isEditing && (
+                      <button
+                        onClick={() => {
+                          setEditingRoomId(room.id);
+                          setEditingRoomName(room.name);
+                        }}
+                        className="dashboard-room-edit-btn"
+                        title="Editar nombre"
+                        aria-label="Editar nombre de la sala"
+                      >
+                        <FaEdit size={13} />
+                        <span>Editar</span>
+                      </button>
+                    )}
                   </div>
+
+                  {/* ── Detalles ── */}
                   <div className="dashboard-room-details">
                     <div className="dashboard-room-detail">
                       <LuHash size={14} />
@@ -412,10 +535,13 @@ const Dashboard: React.FC = () => {
                       <span>{formatDate(room.createdAt)}</span>
                     </div>
                   </div>
-                  <div className="flex gap-2">
+
+                  {/* ── Acciones ── */}
+                  <div className="dashboard-room-actions">
                     <button
                       onClick={() => navigate(`/room/${room.roomId}`)}
                       className="dashboard-room-enter"
+                      disabled={isEditing}
                     >
                       <LuDoorOpen size={16} />
                       Entrar a la sala
@@ -425,14 +551,17 @@ const Dashboard: React.FC = () => {
                         setDeleteRoom(true);
                         setRoomToDelete(room.roomId);
                       }}
-                      className="dashboard-logout-btn"
+                      className="dashboard-room-delete-btn"
+                      disabled={isEditing}
+                      title="Eliminar sala"
+                      aria-label="Eliminar sala"
                     >
-                      <MdDelete size={40} />
-                      Eliminar Sala
+                      <MdDelete size={18} />
                     </button>
                   </div>
                 </div>
-              ))}
+                );
+              })}
             </div>
           )}
 

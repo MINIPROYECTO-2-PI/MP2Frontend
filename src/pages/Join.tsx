@@ -19,7 +19,7 @@ const Join: React.FC = () => {
     }
 
     // Pattern check: 3-4-3 (e.g., abc-defg-hij)
-    const pattern = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/;
+    const pattern = /^[a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3}$/;
     if (!pattern.test(cleanedId)) {
       setErrorMsg("Formato inválido. Debe ser abc-defg-hij (3-4-3 caracteres en minúscula)");
       return;

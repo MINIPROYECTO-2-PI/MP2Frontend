@@ -4,7 +4,7 @@ import { useAuth } from "../contexts/AuthContext";
 import {
   connectSocket,
   disconnectSocket,
-  getSocket,
+  
   type Socket,
 } from "../services/socket";
 import {
@@ -83,7 +83,7 @@ const Room: React.FC = () => {
     });
 
     socket.on("delete-room", (data: { roomId: string; message: string }) => {
-      const { roomId, message } = data;
+      const {  message } = data;
 
       alert(message);
     });
@@ -390,7 +390,7 @@ const Room: React.FC = () => {
               ) : (
                 messages.map((msg) => {
                   const isSystem = msg.senderUid === "system";
-                  const isMe = msg.senderUid === user.uid;
+                  const isMe = msg.senderUid === user?.uid;
 
                   if (isSystem) {
                     return (
