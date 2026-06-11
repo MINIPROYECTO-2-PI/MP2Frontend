@@ -48,7 +48,6 @@ const Join: React.FC = () => {
   const navigate = useNavigate();
 
   const formatted = formatId(rawInput);
-  const isComplete = rawInput.length === TOTAL_RAW;
   const isValid = PATTERN.test(formatted);
 
   // Segment fill progress (for visual indicators)

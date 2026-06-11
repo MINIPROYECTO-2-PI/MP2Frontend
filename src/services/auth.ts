@@ -6,7 +6,8 @@ import {
 } from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_URL = "https://mp2backend.onrender.com";
+export const API_URL =
+  import.meta.env.VITE_API_URL ?? "https://mp2backend.onrender.com";
 const provider = new GoogleAuthProvider();
 
 export interface AuthUser {
@@ -147,7 +148,7 @@ async function request<T>(url: string, body: object): Promise<T> {
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new Error(
-      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
     );
   }
 }
@@ -162,7 +163,7 @@ async function requestGet<T>(url: string): Promise<T> {
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new Error(
-      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
     );
   }
 }
@@ -178,7 +179,7 @@ async function requestPut<T>(url: string, body: object): Promise<T> {
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new Error(
-      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
     );
   }
 }
@@ -193,7 +194,7 @@ async function requestDelete<T>(url: string): Promise<T> {
   } catch (error) {
     if (error instanceof ApiError) throw error;
     throw new Error(
-      `No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`,
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
     );
   }
 }

@@ -1,0 +1,14 @@
+{
+  "folders": [
+	{
+		"path": "../.."
+	},
+	{
+		"path": "../../../MP2BackendPrincipal"
+	},
+	{
+		"path": "../../../MP2BackendRT"
+	}
+],
+  "settings": {}
+}

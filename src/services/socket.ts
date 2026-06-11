@@ -1,6 +1,7 @@
 import { io, type Socket } from "socket.io-client";
 
-const SOCKET_URL = "https://backendrealtime.onrender.com";
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ?? "https://backendrealtime.onrender.com";
 
 let socket: Socket | null = null;
 

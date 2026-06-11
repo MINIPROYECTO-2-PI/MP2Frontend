@@ -4,9 +4,18 @@ import { useAuth } from "../contexts/AuthContext";
 import {
   connectSocket,
   disconnectSocket,
-  
   type Socket,
 } from "../services/socket";
+
+const configuration = {
+  iceServers: [
+    {
+      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
 import {
   LuUsers,
   LuMessageSquare,
@@ -20,7 +29,6 @@ import {
   LuCopy,
   LuCheck,
   LuUser,
-  LuSparkles,
 } from "react-icons/lu";
 
 interface ChatMessage {
@@ -36,7 +44,40 @@ interface ActiveUser {
   uid: string;
 }
 
+interface RemoteVideoProps {
+  peerId: string;
+  stream: MediaStream;
+}
+
+const RemoteVideo: React.FC<RemoteVideoProps> = ({ peerId, stream }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <div className="room-video-card">
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        className="room-video-feed"
+      />
+      <div className="room-participant-labels">
+        <span className="participant-badge-name">Participante ({peerId.substring(0, 5)})</span>
+      </div>
+    </div>
+  );
+};
+
 const Room: React.FC = () => {
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+
   const { roomId } = useParams<{ roomId: string }>();
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -47,35 +88,198 @@ const Room: React.FC = () => {
   const [roomName, setRoomName] = useState("");
   const [hostUid, setHostUid] = useState("");
 
-  // Real-time states
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
 
-  // UI Controls (Simulated Video/Audio states for premium feel)
   const [isVideoOn, setIsVideoOn] = useState(false);
   const [isMicOn, setIsMicOn] = useState(false);
   const [copied, setCopied] = useState(false);
 
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+
   const socketRef = useRef<Socket | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
-  // Auto scroll chat to bottom
+  // 1. Pedir permisos y guardar stream local con fallback robusto
   useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
+    const handlePermissions = async () => {
+      let stream: MediaStream | null = null;
+      try {
+        // Intentar obtener ambos video y audio
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      } catch (error) {
+        console.warn("No se pudo obtener cámara y micrófono a la vez, probando solo micrófono...", error);
+        try {
+          // Intentar obtener solo audio
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true,
+          });
+        } catch (audioError) {
+          console.warn("No se pudo obtener micrófono, probando solo cámara...", audioError);
+          try {
+            // Intentar obtener solo video
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+          } catch (videoError) {
+            console.error("No se encontraron dispositivos de audio ni video o los permisos fueron denegados:", videoError);
+          }
+        }
+      }
 
+      if (stream) {
+        localStreamRef.current = stream;
+        setLocalStream(stream);
+        // Empezar con tracks desactivados hasta que el usuario los encienda
+        stream.getVideoTracks().forEach((t) => (t.enabled = false));
+        stream.getAudioTracks().forEach((t) => (t.enabled = false));
+      }
+    };
+    handlePermissions();
+  }, []);
+
+  // 2. Asignar el stream local al elemento de video cuando este se renderice
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, loading, isValidating]);
+
+  // 3. Crear RTCPeerConnection para un peer remoto
+  const createPeerConnection = (remotePeerId: string): RTCPeerConnection => {
+    const pc = new RTCPeerConnection(configuration);
+
+    // Añadir tracks locales al peer connection si están disponibles
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    // Enviar ICE candidates al peer remoto via socket
+    pc.onicecandidate = (event) => {
+      if (event.candidate && socketRef.current) {
+        socketRef.current.emit("signal", remotePeerId, socketRef.current.id, {
+          type: "candidate",
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    // Cuando llega el stream remoto, agregarlo a nuestro estado de remoteStreams
+    pc.ontrack = (event) => {
+      const remoteStream = event.streams[0];
+      setRemoteStreams((prev) => {
+        const next = new Map(prev);
+        next.set(remotePeerId, remoteStream);
+        return next;
+      });
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`ICE state [${remotePeerId}]:`, pc.iceConnectionState);
+      if (
+        pc.iceConnectionState === "disconnected" ||
+        pc.iceConnectionState === "closed" ||
+        pc.iceConnectionState === "failed"
+      ) {
+        pc.close();
+        peerConnectionsRef.current.delete(remotePeerId);
+        setRemoteStreams((prev) => {
+          const next = new Map(prev);
+          next.delete(remotePeerId);
+          return next;
+        });
+      }
+    };
+
+    peerConnectionsRef.current.set(remotePeerId, pc);
+    return pc;
+  };
+
+  // 4. Conexión principal al socket, sala y control de WebRTC
   useEffect(() => {
     if (!roomId || !user) {
       navigate("/dashboard");
       return;
     }
 
-    // Connect to WebSocket server via centralized singleton
     const socket = connectSocket();
     socketRef.current = socket;
 
-    // Join room event
+    const handleSignal = async (
+      _to: string,
+      from: string,
+      data: RTCSessionDescriptionInit & { candidate?: RTCIceCandidateInit },
+    ) => {
+      if (from === socket.id) return; // Ignorar señales a uno mismo
+
+      let pc = peerConnectionsRef.current.get(from);
+      if (!pc) pc = createPeerConnection(from);
+
+      try {
+        if (data.type === "offer") {
+          if (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(data));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit("signal", from, socket.id, answer);
+          } else {
+            console.warn(`Se recibió 'offer' de ${from} pero el estado actual es ${pc.signalingState}. Ignorando.`);
+          }
+        } else if (data.type === "answer") {
+          if (pc.signalingState === "have-local-offer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(data));
+          } else {
+            console.warn(`Se recibió 'answer' de ${from} pero el estado actual es ${pc.signalingState}. Ignorando.`);
+          }
+        } else if (data.candidate) {
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          }
+        }
+      } catch (err) {
+        console.error(`Error en handleSignal de ${from}:`, err);
+      }
+    };
+
+    const handleNewUser = async (newPeerId: string) => {
+      if (newPeerId === socket.id) return; // Ignorar si somos nosotros mismos
+
+      const pc = createPeerConnection(newPeerId);
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit("signal", newPeerId, socket.id, offer);
+      } catch (err) {
+        console.error(`Error al crear oferta para ${newPeerId}:`, err);
+      }
+    };
+
+    const handleUserDisconnected = (peerId: string) => {
+      const pc = peerConnectionsRef.current.get(peerId);
+      if (pc) {
+        pc.close();
+        peerConnectionsRef.current.delete(peerId);
+        setRemoteStreams((prev) => {
+          const next = new Map(prev);
+          next.delete(peerId);
+          return next;
+        });
+      }
+    };
+
+    socket.on("signal", handleSignal);
+    socket.on("newUserConnected", handleNewUser);
+    socket.on("userDisconnected", handleUserDisconnected);
+
     socket.emit("join-room", {
       roomId,
       username: user.username || user.displayName || "Estudiante",
@@ -83,12 +287,10 @@ const Room: React.FC = () => {
     });
 
     socket.on("delete-room", (data: { roomId: string; message: string }) => {
-      const {  message } = data;
-
-      alert(message);
+      alert(data.message);
+      navigate("/dashboard");
     });
 
-    // 1. Connection successful
     socket.on(
       "room-joined-success",
       (data: {
@@ -105,64 +307,72 @@ const Room: React.FC = () => {
       },
     );
 
-    // 2. Room is invalid
     socket.on("room-invalid", (msg: string) => {
       setErrorMsg(msg);
       setIsValidating(false);
       setLoading(false);
     });
 
-    // 3. General error
     socket.on("error-msg", (msg: string) => {
       setErrorMsg(msg);
     });
 
-    // 4. Receives whole room history of messages
     socket.on("room-history", (history: ChatMessage[]) => {
       setMessages(history);
     });
 
-    // 5. Another user joins
     socket.on(
       "user-joined",
       (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
         setActiveUsers(data.activeUsers);
-        // Append a system message
-        const systemMsg: ChatMessage = {
-          id: `sys-${Date.now()}`,
-          senderUid: "system",
-          senderUsername: "MeetClone",
-          text: `@${data.username} se ha unido a la sala de estudio`,
-          createdAt: new Date(),
-        };
-        setMessages((prev) => [...prev, systemMsg]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            senderUid: "system",
+            senderUsername: "Sistema",
+            text: `@${data.username} se ha unido a la sala`,
+            createdAt: new Date(),
+          },
+        ]);
       },
     );
 
-    // 6. User leaves
     socket.on(
       "user-left",
       (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
         setActiveUsers(data.activeUsers);
-        // Append a system message
-        const systemMsg: ChatMessage = {
-          id: `sys-${Date.now()}`,
-          senderUid: "system",
-          senderUsername: "MeetClone",
-          text: `@${data.username} ha salido de la sala`,
-          createdAt: new Date(),
-        };
-        setMessages((prev) => [...prev, systemMsg]);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            senderUid: "system",
+            senderUsername: "Sistema",
+            text: `@${data.username} ha salido de la sala`,
+            createdAt: new Date(),
+          },
+        ]);
       },
     );
 
-    // 7. Receives new text message
     socket.on("receive-message", (msg: ChatMessage) => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    // Cleanup on unmount
     return () => {
+      // Cerrar todos los peer connections al salir
+      peerConnectionsRef.current.forEach((pc) => pc.close());
+      peerConnectionsRef.current.clear();
+      setRemoteStreams(new Map());
+
+      // Detener tracks locales
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+
+      socket.off("signal", handleSignal);
+      socket.off("newUserConnected", handleNewUser);
+      socket.off("userDisconnected", handleUserDisconnected);
+      socket.off("delete-room");
       socket.off("room-joined-success");
       socket.off("room-invalid");
       socket.off("error-msg");
@@ -173,6 +383,26 @@ const Room: React.FC = () => {
       disconnectSocket();
     };
   }, [roomId, user, navigate]);
+
+  // 5. Auto scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // 6. Controles reales de mic y video
+  const toggleMic = () => {
+    localStreamRef.current?.getAudioTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+    });
+    setIsMicOn((prev) => !prev);
+  };
+
+  const toggleVideo = () => {
+    localStreamRef.current?.getVideoTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+    });
+    setIsVideoOn((prev) => !prev);
+  };
 
   const handleSendMessage = (e: React.FormEvent) => {
     e.preventDefault();
@@ -244,7 +474,6 @@ const Room: React.FC = () => {
         <div className="auth-blob auth-blob--2" />
       </div>
 
-      {/* Room Header */}
       <header className="room-header">
         <div className="room-header-left">
           <div className="room-logo">
@@ -264,7 +493,6 @@ const Room: React.FC = () => {
             </div>
           </div>
         </div>
-
         <div className="room-header-right">
           <button onClick={handleLeave} className="room-leave-btn">
             <LuLogOut size={16} />
@@ -273,24 +501,19 @@ const Room: React.FC = () => {
         </div>
       </header>
 
-      {/* Main Grid */}
       <div className="room-grid">
-        {/* Left Side: Video/Collaborative Stage */}
         <div className="room-stage">
           <div className="room-video-container">
-            {/* Main Participant (You or simulated speaker) */}
+            {/* Video local */}
             <div className="room-video-card">
-              {isVideoOn ? (
-                <div className="room-video-active-feed">
-                  {/* Simulated interactive active stream */}
-                  <div className="room-avatar-glowing">
-                    <LuSparkles size={40} className="glowing-sparkle" />
-                  </div>
-                  <span className="room-stream-placeholder">
-                    Cámara activa (Transmitiendo en tiempo real)
-                  </span>
-                </div>
-              ) : (
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className={`room-video-feed ${isVideoOn ? "" : "room-video-feed--hidden"}`}
+              />
+              {!isVideoOn && (
                 <div className="room-video-placeholder">
                   {user?.photoURL ? (
                     <img
@@ -313,8 +536,6 @@ const Room: React.FC = () => {
                   <span className="room-status-sub">Cámara Apagada</span>
                 </div>
               )}
-
-              {/* Status Pills */}
               <div className="room-participant-labels">
                 <span className="participant-badge-name">Tú</span>
                 {!isMicOn && (
@@ -322,12 +543,17 @@ const Room: React.FC = () => {
                 )}
               </div>
             </div>
+
+            {/* Videos remotos — uno por cada peer con stream */}
+            {Array.from(remoteStreams.entries()).map(([peerId, stream]) => (
+              <RemoteVideo key={peerId} peerId={peerId} stream={stream} />
+            ))}
           </div>
 
-          {/* Interactive Stage Controls */}
           <div className="room-controls-bar">
             <button
-              onClick={() => setIsMicOn(!isMicOn)}
+              onClick={toggleMic}
+              disabled={!localStream || localStream.getAudioTracks().length === 0}
               className={`room-control-btn ${isMicOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
               title={isMicOn ? "Silenciar Micrófono" : "Activar Micrófono"}
             >
@@ -336,7 +562,8 @@ const Room: React.FC = () => {
             </button>
 
             <button
-              onClick={() => setIsVideoOn(!isVideoOn)}
+              onClick={toggleVideo}
+              disabled={!localStream || localStream.getVideoTracks().length === 0}
               className={`room-control-btn ${isVideoOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
               title={isVideoOn ? "Apagar Cámara" : "Encender Cámara"}
             >
@@ -346,9 +573,7 @@ const Room: React.FC = () => {
           </div>
         </div>
 
-        {/* Right Side: Sidebar containing Active Users List & Real-time Chat */}
         <aside className="room-sidebar">
-          {/* Active Users Section */}
           <div className="room-sidebar-section room-users-section">
             <div className="section-header">
               <LuUsers size={16} />
@@ -374,7 +599,6 @@ const Room: React.FC = () => {
             </div>
           </div>
 
-          {/* Real-time Chat Section */}
           <div className="room-sidebar-section room-chat-section">
             <div className="section-header">
               <LuMessageSquare size={16} />

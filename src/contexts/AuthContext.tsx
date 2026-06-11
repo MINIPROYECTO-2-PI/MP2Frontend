@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect, useState } from "react";
 import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
 import { auth } from "../services/firebase";
-import { User } from "../services/auth";
+import { User, API_URL } from "../services/auth";
 import type { AuthUser, UpdateProfileData } from "../services/auth";
 
 interface AuthContextType {
@@ -28,7 +28,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const syncGoogleUserWithBackend = async (firebaseUser: FirebaseUser) => {
     try {
       const response = await fetch(
-        `https://mp2backend.onrender.com/google-login`,
+        `${API_URL}/google-login`,
         {
           method: "POST",
           headers: { "Content-Type": "application/json" },

@@ -15,6 +15,7 @@ import ChooseUsername from "./pages/ChooseUsername.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { ProtectedRoute, PublicRoute, UsernameRequiredRoute } from "./components/AuthRoutes.tsx";
 
+
 const router = createBrowserRouter([
   // Rutas públicas (solo accesibles si NO estás autenticado)
   {
@@ -71,6 +72,8 @@ const router = createBrowserRouter([
     ],
   },
 ]);
+
+
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
