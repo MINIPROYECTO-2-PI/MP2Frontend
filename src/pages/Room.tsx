@@ -275,7 +275,7 @@ const Room: React.FC = () => {
       }
     };
 
-    const handleNewPeer = async (data: {
+    const handleNewPeer = (data: {
       peerId: string;
       username: string;
       uid: string;
@@ -284,21 +284,14 @@ const Room: React.FC = () => {
       const { peerId, username } = data;
       if (peerId === socket.id) return;
 
-      // ✅ useState para usernames remotos
+      // Guardar username y actualizar lista
       setRemoteUsernames((prev) => new Map(prev).set(peerId, username));
       setActiveUsers(data.activeUsers);
 
-      const pc = createPeerConnection(peerId);
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit("signal", peerId, socket.id, offer);
-      } catch (err) {
-        console.error(
-          `[handleNewPeer] Error creando offer para ${peerId}:`,
-          err,
-        );
-      }
+      // Solo crear el PC — NO enviar offer.
+      // El nuevo peer (room-joined-success) es quien envía el offer,
+      // y nosotros lo recibiremos en handleSignal en estado "stable".
+      createPeerConnection(peerId);
     };
 
     const handleUserDisconnected = (peerId: string) => {
