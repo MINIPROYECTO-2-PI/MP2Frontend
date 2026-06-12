@@ -458,12 +458,6 @@ const Room: React.FC = () => {
     socket.on("new-peer-joined", handleNewPeer);
     socket.on("userDisconnected", handleUserDisconnected);
 
-    socket.emit("join-room", {
-      roomId,
-      username: user.username || user.displayName || "Estudiante",
-      uid: user.uid,
-    });
-
     socket.on("delete-room", (data: { roomId: string; message: string }) => {
       alert(data.message);
       navigate("/dashboard");
@@ -489,7 +483,6 @@ const Room: React.FC = () => {
         );
 
         for (const existingUser of peersAlreadyInRoom) {
-          // ✅ useState para usernames remotos
           setRemoteUsernames((prev) =>
             new Map(prev).set(existingUser.socketId, existingUser.username),
           );
@@ -499,7 +492,6 @@ const Room: React.FC = () => {
             await pc.setLocalDescription(offer);
             socket.emit("signal", existingUser.socketId, socket.id, offer);
 
-            // Send our initial media state!
             socket.emit("signal", existingUser.socketId, socket.id, {
               type: "media-state",
               isVideoOn: isVideoOnRef.current,
@@ -562,10 +554,19 @@ const Room: React.FC = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
+    // ─── Emit AFTER all listeners are registered ────────────────────────
+    socket.emit("join-room", {
+      roomId,
+      username: user.username || user.displayName || "Estudiante",
+      uid: user.uid,
+    });
+
     return () => {
       peerConnectionsRef.current.forEach((pc) => pc.close());
       peerConnectionsRef.current.clear();
       setRemoteStreams(new Map());
+      setRemoteUsernames(new Map());
+      setRemoteMediaStates(new Map());
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       localStreamRef.current = null;
 
