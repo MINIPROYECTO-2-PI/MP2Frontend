@@ -596,14 +596,35 @@ const Room: React.FC = () => {
             </div>
 
             {/* ── Videos remotos ───────────────────────────────────────────── */}
-            {Array.from(remoteStreams.entries()).map(([peerId, stream]) => (
-              <RemoteVideo
-                key={peerId}
-                peerId={peerId}
-                stream={stream}
-                username={remoteUsernames.get(peerId) || "Participante"}
-              />
-            ))}
+            {Array.from(remoteUsernames.entries()).map(([peerId, username]) => {
+              const stream = remoteStreams.get(peerId);
+              if (stream) {
+                return (
+                  <RemoteVideo
+                    key={peerId}
+                    peerId={peerId}
+                    stream={stream}
+                    username={username}
+                  />
+                );
+              }
+              return (
+                <div key={peerId} className="room-video-card">
+                  <div className="room-video-placeholder">
+                    <div className="room-video-avatar-fallback">
+                      {username.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="room-video-name">@{username}</span>
+                    <span className="room-status-sub">Conectando...</span>
+                  </div>
+                  <div className="room-participant-labels">
+                    <span className="participant-badge-name">
+                      @{username} ({peerId.substring(0, 5)})
+                    </span>
+                  </div>
+                </div>
+              );
+            })}
           </div>
 
           {/* ── Controles ──────────────────────────────────────────────────── */}
