@@ -193,8 +193,8 @@ const Room: React.FC = () => {
   const socketRef = useRef<Socket | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const mySocketIdRef = useRef<string>("");
-  const isVideoOnRef = useRef(false);
-  const isMicOnRef = useRef(false);
+  const isVideoOnRef = useRef(true);
+  const isMicOnRef = useRef(true);
 
   // estado de UI
   const [loading, setLoading] = useState(true);
@@ -205,8 +205,8 @@ const Room: React.FC = () => {
   const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [newMessage, setNewMessage] = useState("");
-  const [isVideoOn, setIsVideoOn] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(false);
+  const [isVideoOn, setIsVideoOn] = useState(true);
+  const [isMicOn, setIsMicOn] = useState(true);
   const [copied, setCopied] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
@@ -290,6 +290,8 @@ const Room: React.FC = () => {
   // ── 1. Obtener media con feedback de permisos ─────────────────────────────
   useEffect(() => {
     let mounted = true;
+    let activeStream: MediaStream | null = null;
+
     const tryGetMedia = async () => {
       let hasVideo = false;
       let hasAudio = false;
@@ -361,11 +363,24 @@ const Room: React.FC = () => {
 
       // Detectar tracks reales obtenidos
       if (stream) {
-        if (stream.getVideoTracks().length > 0) hasVideo = true;
-        if (stream.getAudioTracks().length > 0) hasAudio = true;
-        stream.getTracks().forEach((t) => (t.enabled = false));
+        activeStream = stream;
+        hasVideo = stream.getVideoTracks().length > 0;
+        hasAudio = stream.getAudioTracks().length > 0;
+
+        // Mantener activos los tracks por defecto para que la persona pueda verse
         localStreamRef.current = stream;
         setLocalStream(stream);
+
+        // Inicializar el estado de controles de acuerdo con el hardware real obtenido
+        setIsVideoOn(hasVideo);
+        isVideoOnRef.current = hasVideo;
+        setIsMicOn(hasAudio);
+        isMicOnRef.current = hasAudio;
+      } else {
+        setIsVideoOn(false);
+        isVideoOnRef.current = false;
+        setIsMicOn(false);
+        isMicOnRef.current = false;
       }
 
       // Actualizar permisos y mostrar toasts
@@ -395,20 +410,17 @@ const Room: React.FC = () => {
 
       setMediaReady(true);
     };
+
     tryGetMedia();
+
     return () => {
       mounted = false;
+      if (activeStream) {
+        console.log("[Room] Limpiando tracks locales del efecto actual...");
+        activeStream.getTracks().forEach((t) => t.stop());
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
-  // ── 2. Limpieza del stream al desmontar el componente ───────────────────
-  useEffect(() => {
-    return () => {
-      console.log("[Room] Desmontando componente, deteniendo tracks locales...");
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      localStreamRef.current = null;
-    };
   }, []);
 
   // ── 2.5 Vincular stream local al <video> ───────────────────────────────────
