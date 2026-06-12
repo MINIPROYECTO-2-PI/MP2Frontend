@@ -211,6 +211,7 @@ const Room: React.FC = () => {
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
   // ── Estado de permisos de media ────────────────────────────────────────────
+  const [mediaReady, setMediaReady] = useState(false);
   const [mediaPerms, setMediaPerms] = useState<{
     video: "pending" | "granted" | "denied";
     audio: "pending" | "granted" | "denied";
@@ -359,6 +360,8 @@ const Room: React.FC = () => {
       } else {
         addToast("error", "No se pudo acceder a cámara ni micrófono. Revisa los permisos del navegador.");
       }
+
+      setMediaReady(true);
     };
     tryGetMedia();
     return () => {
@@ -429,6 +432,7 @@ const Room: React.FC = () => {
 
   // ── 4. Lógica principal de socket ─────────────────────────────────────────
   useEffect(() => {
+    if (!mediaReady) return;
     if (!roomId || !user) {
       navigate("/dashboard");
       return;
@@ -436,6 +440,15 @@ const Room: React.FC = () => {
 
     const socket = connectSocket();
     socketRef.current = socket;
+
+    const handleConnect = () => {
+      console.log("[socket] Conectado. Enviando join-room...");
+      socket.emit("join-room", {
+        roomId,
+        username: user.username || user.displayName || "Estudiante",
+        uid: user.uid,
+      });
+    };
 
     // ── Señalización ──────────────────────────────────────────────────────
     const onSignal = async (_to: string, from: string, data: any) => {
@@ -567,6 +580,10 @@ const Room: React.FC = () => {
         console.log(
           `[room-joined-success] myId=${myId} peers=${data.activeUsers.length}`,
         );
+        console.log(
+          "[room-joined-success] activeUsers list:",
+          JSON.stringify(data.activeUsers),
+        );
         mySocketIdRef.current = myId;
         setRoomName(data.roomName);
         setHostUid(data.hostUid);
@@ -637,12 +654,11 @@ const Room: React.FC = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    // ✅ Emitir join-room DESPUÉS de registrar todos los listeners
-    socket.emit("join-room", {
-      roomId,
-      username: user.username || user.displayName || "Estudiante",
-      uid: user.uid,
-    });
+    // ✅ Emitir join-room DESPUÉS de registrar todos los listeners, controlando reconexiones
+    socket.on("connect", handleConnect);
+    if (socket.connected) {
+      handleConnect();
+    }
 
     return () => {
       peerConnectionsRef.current.forEach((pc) => pc.close());
@@ -651,6 +667,7 @@ const Room: React.FC = () => {
       localStreamRef.current = null;
       setRemotes(new Map());
 
+      socket.off("connect", handleConnect);
       socket.off("signal", onSignal);
       socket.off("new-peer-joined", onNewPeer);
       socket.off("userDisconnected", onUserDisconnected);
@@ -665,7 +682,7 @@ const Room: React.FC = () => {
       disconnectSocket();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [roomId, user?.uid]);
+  }, [roomId, user?.uid, mediaReady]);
 
   // ── 5. Auto scroll chat ───────────────────────────────────────────────────
   useEffect(() => {
