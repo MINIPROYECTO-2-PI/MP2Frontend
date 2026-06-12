@@ -420,13 +420,9 @@ const Room: React.FC = () => {
       const { peerId, username } = data;
       if (peerId === socket.id) return;
 
-      // Guardar username y actualizar lista
+      console.log(`[new-peer-joined] ${username} (${peerId.substring(0, 5)})`);
       setRemoteUsernames((prev) => new Map(prev).set(peerId, username));
       setActiveUsers(data.activeUsers);
-
-      // Solo crear el PC — NO enviar offer.
-      // El nuevo peer (room-joined-success) es quien envía el offer,
-      // y nosotros lo recibiremos en handleSignal en estado "stable".
       createPeerConnection(peerId);
     };
 
@@ -472,6 +468,7 @@ const Room: React.FC = () => {
         activeUsers: ActiveUser[];
         mySocketId: string;
       }) => {
+        console.log(`[room-joined-success] users=${data.activeUsers.length}`);
         setRoomName(data.roomName);
         setHostUid(data.hostUid);
         setActiveUsers(data.activeUsers);
@@ -481,6 +478,8 @@ const Room: React.FC = () => {
         const peersAlreadyInRoom = data.activeUsers.filter(
           (u) => u.socketId && u.socketId !== data.mySocketId,
         );
+
+        console.log(`[room-joined-success] peersToOffer=${peersAlreadyInRoom.length}`);
 
         for (const existingUser of peersAlreadyInRoom) {
           setRemoteUsernames((prev) =>
@@ -590,7 +589,24 @@ const Room: React.FC = () => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── 6. Controles media ─────────────────────────────────────────────────────
+  // ── 6. Sync remoteUsernames con activeUsers (fallback si eventos no llegan) ──
+  useEffect(() => {
+    if (!user?.uid || !socketRef.current?.id) return;
+    const mySocketId = socketRef.current.id;
+    setRemoteUsernames((prev) => {
+      const next = new Map(prev);
+      let changed = false;
+      activeUsers.forEach((u) => {
+        if (u.socketId && u.socketId !== mySocketId && !next.has(u.socketId)) {
+          next.set(u.socketId, u.username);
+          changed = true;
+        }
+      });
+      return changed ? next : prev;
+    });
+  }, [activeUsers, user?.uid]);
+
+  // ── 7. Controles media ─────────────────────────────────────────────────────
   const toggleMic = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => {
       t.enabled = !t.enabled;
