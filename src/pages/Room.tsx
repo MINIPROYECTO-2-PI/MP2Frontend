@@ -220,6 +220,7 @@ const Room: React.FC = () => {
   const [remoteMediaStates, setRemoteMediaStates] = useState<Map<string, { isVideoOn: boolean; isMicOn: boolean }>>(
     new Map(),
   );
+  const [mediaReady, setMediaReady] = useState(false);
 
   const isVideoOnRef = useRef(isVideoOn);
   const isMicOnRef = useRef(isMicOn);
@@ -268,6 +269,7 @@ const Room: React.FC = () => {
       } else {
         console.error("No se pudo obtener ningún dispositivo de media");
       }
+      setMediaReady(true);
     };
 
     initMedia();
@@ -337,6 +339,7 @@ const Room: React.FC = () => {
 
   // ── 4. Conexión socket + lógica WebRTC ────────────────────────────────────
   useEffect(() => {
+    if (!mediaReady) return;
     if (!roomId || !user) {
       navigate("/dashboard");
       return;
@@ -579,7 +582,7 @@ const Room: React.FC = () => {
       socket.off("receive-message");
       disconnectSocket();
     };
-  }, [roomId, user, navigate]);
+  }, [roomId, user, navigate, mediaReady]);
 
   // ── 5. Auto scroll chat ────────────────────────────────────────────────────
   useEffect(() => {
