@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef } from "react";
+import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -21,15 +21,17 @@ import {
   LuUser,
 } from "react-icons/lu";
 
-const RTC_CONFIG = {
+// ─── Configuración WebRTC ─────────────────────────────────────────────────────
+const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
-    {
-      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
-    },
+    { urls: "stun:stun.l.google.com:19302" },
+    { urls: "stun:stun1.l.google.com:19302" },
+    { urls: "stun:stun2.l.google.com:19302" },
   ],
   iceCandidatePoolSize: 10,
 };
 
+// ─── Interfaces ───────────────────────────────────────────────────────────────
 interface ChatMessage {
   id: string;
   senderUid: string;
@@ -44,142 +46,131 @@ interface ActiveUser {
   uid: string;
 }
 
-// ─── Detector de voz (Audio Analyser) ─────────────────────────────────────────
-const useAudioAnalyser = (stream: MediaStream | null, isMuted: boolean = false) => {
-  const [isSpeaking, setIsSpeaking] = useState(false);
+interface RemoteState {
+  stream: MediaStream | null;
+  username: string;
+  isVideoOn: boolean;
+  isMicOn: boolean;
+}
+
+// ─── Hook: detector de voz ────────────────────────────────────────────────────
+function useIsSpeaking(stream: MediaStream | null, muted: boolean): boolean {
+  const [speaking, setSpeaking] = useState(false);
 
   useEffect(() => {
-    if (!stream || isMuted) {
-      setIsSpeaking(false);
+    if (!stream || muted) {
+      setSpeaking(false);
       return;
     }
-
     const audioTracks = stream.getAudioTracks();
-    if (audioTracks.length === 0) {
-      setIsSpeaking(false);
+    if (!audioTracks.length) {
+      setSpeaking(false);
       return;
     }
 
-    let audioContext: AudioContext | null = null;
-    let source: MediaStreamAudioSourceNode | null = null;
-    let analyser: AnalyserNode | null = null;
-    let animationFrameId: number;
-
+    let ctx: AudioContext | null = null;
+    let rafId = 0;
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
-      audioContext = new AudioContextClass();
-      source = audioContext.createMediaStreamSource(stream);
-      analyser = audioContext.createAnalyser();
+      ctx = new AudioContext();
+      const src = ctx.createMediaStreamSource(stream);
+      const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
-      source.connect(analyser);
+      src.connect(analyser);
+      const buf = new Uint8Array(analyser.frequencyBinCount);
+      let counter = 0;
 
-      const bufferLength = analyser.frequencyBinCount;
-      const dataArray = new Uint8Array(bufferLength);
-
-      let speakingCounter = 0;
-
-      const checkVolume = () => {
-        if (!analyser || !audioContext || audioContext.state === 'closed') return;
-        analyser.getByteFrequencyData(dataArray);
-
-        let sum = 0;
-        for (let i = 0; i < bufferLength; i++) {
-          sum += dataArray[i];
-        }
-        const average = sum / bufferLength;
-
-        if (average > 15) {
-          speakingCounter = Math.min(speakingCounter + 1, 10);
-        } else {
-          speakingCounter = Math.max(speakingCounter - 1, 0);
-        }
-
-        setIsSpeaking(speakingCounter > 2);
-        animationFrameId = requestAnimationFrame(checkVolume);
+      const tick = () => {
+        analyser.getByteFrequencyData(buf);
+        const avg = buf.reduce((a, b) => a + b, 0) / buf.length;
+        counter =
+          avg > 15 ? Math.min(counter + 1, 10) : Math.max(counter - 1, 0);
+        setSpeaking(counter > 2);
+        rafId = requestAnimationFrame(tick);
       };
-
-      checkVolume();
-    } catch (err) {
-      console.warn("Error initializing Audio Analyser:", err);
+      tick();
+    } catch {
+      /* sin mic */
     }
 
     return () => {
-      cancelAnimationFrame(animationFrameId);
-      if (source) source.disconnect();
-      if (audioContext) audioContext.close();
+      cancelAnimationFrame(rafId);
+      ctx?.close();
     };
-  }, [stream, isMuted]);
+  }, [stream, muted]);
 
-  return isSpeaking;
-};
+  return speaking;
+}
 
-// ─── Video remoto ─────────────────────────────────────────────────────────────
+// ─── Tarjeta de video remoto ──────────────────────────────────────────────────
 const RemoteVideo: React.FC<{
   peerId: string;
-  stream: MediaStream;
-  username: string;
-  isMuted: boolean;
-  isVideoOn: boolean;
-}> = ({ peerId, stream, username, isMuted, isVideoOn }) => {
+  state: RemoteState;
+}> = ({ peerId, state }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
-  const [hasVideo, setHasVideo] = useState(false);
-  const isSpeaking = useAudioAnalyser(stream, isMuted);
+  const speaking = useIsSpeaking(state.stream, !state.isMicOn);
 
   useEffect(() => {
-    if (!videoRef.current) return;
-    videoRef.current.srcObject = stream;
+    if (videoRef.current && state.stream) {
+      videoRef.current.srcObject = state.stream;
+    }
+  }, [state.stream]);
 
-    const checkVideo = () => {
-      const hasTracks = stream
-        .getVideoTracks()
-        .some((t) => t.enabled && t.readyState === "live");
-      setHasVideo(hasTracks);
-    };
-
-    checkVideo();
-    stream.onaddtrack = checkVideo;
-    stream.onremovetrack = checkVideo;
-
-    return () => {
-      stream.onaddtrack = null;
-      stream.onremovetrack = null;
-    };
-  }, [stream]);
-
-  const showVideo = isVideoOn && hasVideo;
+  const showVideo = state.isVideoOn && !!state.stream;
 
   return (
-    <div className={`room-video-card ${isSpeaking ? "speaking" : ""}`}>
+    <div className={`room-video-card${speaking ? " speaking" : ""}`}>
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        className={`room-video-feed ${showVideo ? "" : "room-video-feed--hidden"}`}
+        className={`room-video-feed${showVideo ? "" : " room-video-feed--hidden"}`}
       />
       {!showVideo && (
         <div className="room-video-placeholder">
           <div className="room-video-avatar-fallback">
-            {username ? username.charAt(0).toUpperCase() : <LuUser size={40} />}
+            {state.username ? (
+              state.username.charAt(0).toUpperCase()
+            ) : (
+              <LuUser size={40} />
+            )}
           </div>
-          <span className="room-video-name">@{username}</span>
-          <span className="room-status-sub">Cámara Apagada</span>
+          <span className="room-video-name">
+            @{state.username || "Participante"}
+          </span>
+          <span className="room-status-sub">
+            {state.stream ? "Cámara Apagada" : "Conectando..."}
+          </span>
         </div>
       )}
-      
-      {/* Top right badges */}
       <div className="room-video-card-top-badges">
-        <span className={`media-status-badge ${!isMuted ? "active" : "muted"}`}>
-          {!isMuted ? <LuMic size={14} /> : <LuMicOff size={14} />}
+        <span
+          className={`media-status-badge ${state.isMicOn ? "active" : "muted"}`}
+        >
+          {state.isMicOn ? <LuMic size={14} /> : <LuMicOff size={14} />}
         </span>
-        <span className={`media-status-badge ${isVideoOn ? "active" : "muted"}`}>
-          {isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
+        <span
+          className={`media-status-badge ${state.isVideoOn ? "active" : "muted"}`}
+        >
+          {state.isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
         </span>
       </div>
-
       <div className="room-participant-labels">
-        <span className="participant-badge-name flex items-center gap-1.5" style={{ display: 'inline-flex', alignItems: 'center' }}>
-          {isSpeaking && <span className="speaking-indicator-dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', marginRight: '6px' }} />}
-          @{username} ({peerId.substring(0, 5)})
+        <span
+          className="participant-badge-name"
+          style={{ display: "inline-flex", alignItems: "center", gap: 6 }}
+        >
+          {speaking && (
+            <span
+              style={{
+                width: 8,
+                height: 8,
+                borderRadius: "50%",
+                background: "#22c55e",
+                display: "inline-block",
+              }}
+            />
+          )}
+          @{state.username} ({peerId.substring(0, 5)})
         </span>
       </div>
     </div>
@@ -188,16 +179,21 @@ const RemoteVideo: React.FC<{
 
 // ─── Componente principal ─────────────────────────────────────────────────────
 const Room: React.FC = () => {
+  const { roomId } = useParams<{ roomId: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  // refs que no deben re-renderizar
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
+  const mySocketIdRef = useRef<string>("");
+  const isVideoOnRef = useRef(false);
+  const isMicOnRef = useRef(false);
 
-  const { roomId } = useParams<{ roomId: string }>();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
+  // estado de UI
   const [loading, setLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -210,136 +206,150 @@ const Room: React.FC = () => {
   const [isMicOn, setIsMicOn] = useState(false);
   const [copied, setCopied] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
-  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(
-    new Map(),
-  );
-  // ✅ useState en lugar de useRef para poder leerlo en el render
-  const [remoteUsernames, setRemoteUsernames] = useState<Map<string, string>>(
-    new Map(),
-  );
-  const [remoteMediaStates, setRemoteMediaStates] = useState<Map<string, { isVideoOn: boolean; isMicOn: boolean }>>(
-    new Map(),
-  );
-  const [mediaReady, setMediaReady] = useState(false);
 
-  const isVideoOnRef = useRef(isVideoOn);
-  const isMicOnRef = useRef(isMicOn);
-  useEffect(() => {
-    isVideoOnRef.current = isVideoOn;
-  }, [isVideoOn]);
-  useEffect(() => {
-    isMicOnRef.current = isMicOn;
-  }, [isMicOn]);
+  // UN solo map que agrupa todo el estado remoto por peerId
+  const [remotes, setRemotes] = useState<Map<string, RemoteState>>(new Map());
 
-  const broadcastMediaState = (videoState: boolean, micState: boolean) => {
-    if (!socketRef.current) return;
-    peerConnectionsRef.current.forEach((_, peerId) => {
-      socketRef.current?.emit("signal", peerId, socketRef.current.id, {
-        type: "media-state",
-        isVideoOn: videoState,
-        isMicOn: micState,
+  const isLocalSpeaking = useIsSpeaking(localStream, !isMicOn);
+
+  // ── Helpers de estado remoto ──────────────────────────────────────────────
+  const upsertRemote = useCallback(
+    (peerId: string, patch: Partial<RemoteState>) => {
+      setRemotes((prev) => {
+        const next = new Map(prev);
+        const existing = next.get(peerId) ?? {
+          stream: null,
+          username: "Participante",
+          isVideoOn: false,
+          isMicOn: false,
+        };
+        next.set(peerId, { ...existing, ...patch });
+        return next;
       });
-    });
-  };
+    },
+    [],
+  );
 
-  // ── 1. Permisos de media con fallback ─────────────────────────────────────
+  const removeRemote = useCallback((peerId: string) => {
+    setRemotes((prev) => {
+      const next = new Map(prev);
+      next.delete(peerId);
+      return next;
+    });
+  }, []);
+
+  // ── Broadcast estado de media a todos los peers conectados ────────────────
+  const broadcastMediaState = useCallback(
+    (videoOn: boolean, micOn: boolean) => {
+      const socket = socketRef.current;
+      if (!socket) return;
+      peerConnectionsRef.current.forEach((_, peerId) => {
+        socket.emit("signal", peerId, socket.id, {
+          type: "media-state",
+          isVideoOn: videoOn,
+          isMicOn: micOn,
+        });
+      });
+    },
+    [],
+  );
+
+  // ── 1. Obtener media ──────────────────────────────────────────────────────
   useEffect(() => {
-    const initMedia = async () => {
-      let stream: MediaStream | null = null;
-      const constraints = [
+    let mounted = true;
+    const tryGetMedia = async () => {
+      const attempts = [
         { video: true, audio: true },
         { video: false, audio: true },
         { video: true, audio: false },
       ];
-
-      for (const c of constraints) {
+      let stream: MediaStream | null = null;
+      for (const c of attempts) {
         try {
           stream = await navigator.mediaDevices.getUserMedia(c);
           break;
-        } catch (e) {
-          console.warn("Intento fallido con", c, e);
+        } catch {
+          /* siguiente intento */
         }
       }
-
+      if (!mounted) {
+        stream?.getTracks().forEach((t) => t.stop());
+        return;
+      }
       if (stream) {
+        stream.getTracks().forEach((t) => (t.enabled = false));
         localStreamRef.current = stream;
         setLocalStream(stream);
-        stream.getVideoTracks().forEach((t) => (t.enabled = false));
-        stream.getAudioTracks().forEach((t) => (t.enabled = false));
-      } else {
-        console.error("No se pudo obtener ningún dispositivo de media");
       }
-      setMediaReady(true);
     };
-
-    initMedia();
+    tryGetMedia();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
-  // ── 2. Asignar stream local al <video> ────────────────────────────────────
+  // ── 2. Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
     }
-  }, [localStream, loading, isValidating]);
+  }, [localStream]);
 
-  // ── 3. Crear RTCPeerConnection ─────────────────────────────────────────────
-  const createPeerConnection = (remotePeerId: string): RTCPeerConnection => {
-    if (peerConnectionsRef.current.has(remotePeerId)) {
-      peerConnectionsRef.current.get(remotePeerId)!.close();
-    }
-
-    const pc = new RTCPeerConnection(RTC_CONFIG);
-
-    if (localStreamRef.current) {
-      localStreamRef.current.getTracks().forEach((track) => {
-        pc.addTrack(track, localStreamRef.current!);
-      });
-    }
-
-    pc.onicecandidate = (event) => {
-      if (event.candidate && socketRef.current) {
-        socketRef.current.emit("signal", remotePeerId, socketRef.current.id, {
-          type: "candidate",
-          candidate: event.candidate,
-        });
-      }
-    };
-
-    pc.ontrack = (event) => {
-      const remoteStream = event.streams[0];
-      if (!remoteStream) return;
-      setRemoteStreams((prev) => {
-        const next = new Map(prev);
-        next.set(remotePeerId, remoteStream);
-        return next;
-      });
-    };
-
-    pc.oniceconnectionstatechange = () => {
-      const state = pc.iceConnectionState;
-      console.log(`[ICE ${remotePeerId.substring(0, 5)}]:`, state);
-      if (
-        state === "disconnected" ||
-        state === "closed" ||
-        state === "failed"
-      ) {
-        pc.close();
+  // ── 3. Crear peer connection ──────────────────────────────────────────────
+  const createPeerConnection = useCallback(
+    (remotePeerId: string): RTCPeerConnection => {
+      // Cerrar la anterior si existe
+      const old = peerConnectionsRef.current.get(remotePeerId);
+      if (old) {
+        old.close();
         peerConnectionsRef.current.delete(remotePeerId);
-        setRemoteStreams((prev) => {
-          const next = new Map(prev);
-          next.delete(remotePeerId);
-          return next;
+      }
+
+      const pc = new RTCPeerConnection(RTC_CONFIG);
+
+      // Añadir tracks locales
+      if (localStreamRef.current) {
+        localStreamRef.current.getTracks().forEach((track) => {
+          pc.addTrack(track, localStreamRef.current!);
         });
       }
-    };
 
-    peerConnectionsRef.current.set(remotePeerId, pc);
-    return pc;
-  };
+      // ICE candidates
+      pc.onicecandidate = ({ candidate }) => {
+        if (candidate && socketRef.current) {
+          socketRef.current.emit("signal", remotePeerId, socketRef.current.id, {
+            type: "candidate",
+            candidate,
+          });
+        }
+      };
 
-  // ── 4. Conexión socket + lógica WebRTC ────────────────────────────────────
+      // Tracks remotos entrantes
+      pc.ontrack = ({ streams }) => {
+        const stream = streams[0];
+        if (!stream) return;
+        upsertRemote(remotePeerId, { stream });
+      };
+
+      // Cambios de estado ICE
+      pc.oniceconnectionstatechange = () => {
+        const s = pc.iceConnectionState;
+        console.log(`[ICE:${remotePeerId.slice(0, 5)}] ${s}`);
+        if (s === "failed" || s === "disconnected" || s === "closed") {
+          pc.close();
+          peerConnectionsRef.current.delete(remotePeerId);
+          // No borrar de remotes aquí — esperar a userDisconnected del servidor
+        }
+      };
+
+      peerConnectionsRef.current.set(remotePeerId, pc);
+      return pc;
+    },
+    [upsertRemote],
+  );
+
+  // ── 4. Lógica principal de socket ─────────────────────────────────────────
   useEffect(() => {
-    if (!mediaReady) return;
     if (!roomId || !user) {
       navigate("/dashboard");
       return;
@@ -348,70 +358,70 @@ const Room: React.FC = () => {
     const socket = connectSocket();
     socketRef.current = socket;
 
-    const handleSignal = async (
-      _to: string,
-      from: string,
-      data: any,
-    ) => {
+    // ── Señalización ──────────────────────────────────────────────────────
+    const onSignal = async (_to: string, from: string, data: any) => {
       if (from === socket.id) return;
 
+      // Mensaje de estado de media (no es WebRTC estándar)
       if (data.type === "media-state") {
-        const { isVideoOn: remoteVideoOn, isMicOn: remoteMicOn } = data;
-        setRemoteMediaStates((prev) => {
-          const next = new Map(prev);
-          next.set(from, { isVideoOn: !!remoteVideoOn, isMicOn: !!remoteMicOn });
-          return next;
+        upsertRemote(from, {
+          isVideoOn: !!data.isVideoOn,
+          isMicOn: !!data.isMicOn,
         });
         return;
       }
 
+      // Obtener o crear peer connection
       let pc = peerConnectionsRef.current.get(from);
       if (!pc) pc = createPeerConnection(from);
 
       try {
         if (data.type === "offer") {
           if (
-            pc.signalingState === "stable" ||
-            pc.signalingState === "have-remote-offer"
+            pc.signalingState !== "stable" &&
+            pc.signalingState !== "have-remote-offer"
           ) {
-            await pc.setRemoteDescription(new RTCSessionDescription(data));
-            const answer = await pc.createAnswer();
-            await pc.setLocalDescription(answer);
-            socket.emit("signal", from, socket.id, answer);
-
-            // Send our media state to the peer who offered
-            socket.emit("signal", from, socket.id, {
-              type: "media-state",
-              isVideoOn: isVideoOnRef.current,
-              isMicOn: isMicOnRef.current,
-            });
-          } else {
-            console.warn(`[offer] Estado inesperado: ${pc.signalingState}`);
+            console.warn(
+              `[offer] signalingState inesperado: ${pc.signalingState}`,
+            );
+            return;
           }
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          const answer = await pc.createAnswer();
+          await pc.setLocalDescription(answer);
+          socket.emit("signal", from, socket.id, answer);
+          // Informar nuestro estado de media al nuevo peer
+          socket.emit("signal", from, socket.id, {
+            type: "media-state",
+            isVideoOn: isVideoOnRef.current,
+            isMicOn: isMicOnRef.current,
+          });
         } else if (data.type === "answer") {
-          if (pc.signalingState === "have-local-offer") {
-            await pc.setRemoteDescription(new RTCSessionDescription(data));
-            
-            // Send our media state to the peer who answered
-            socket.emit("signal", from, socket.id, {
-              type: "media-state",
-              isVideoOn: isVideoOnRef.current,
-              isMicOn: isMicOnRef.current,
-            });
-          } else {
-            console.warn(`[answer] Estado inesperado: ${pc.signalingState}`);
+          if (pc.signalingState !== "have-local-offer") {
+            console.warn(
+              `[answer] signalingState inesperado: ${pc.signalingState}`,
+            );
+            return;
           }
+          await pc.setRemoteDescription(new RTCSessionDescription(data));
+          // Informar nuestro estado de media al peer que respondió
+          socket.emit("signal", from, socket.id, {
+            type: "media-state",
+            isVideoOn: isVideoOnRef.current,
+            isMicOn: isMicOnRef.current,
+          });
         } else if (data.candidate) {
           if (pc.remoteDescription) {
             await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
           }
         }
       } catch (err) {
-        console.error(`[handleSignal] Error con peer ${from}:`, err);
+        console.error(`[signal] error con ${from.slice(0, 5)}:`, err);
       }
     };
 
-    const handleNewPeer = (data: {
+    // ── Nuevo peer en la sala → los peers EXISTENTES crean la offer ───────
+    const onNewPeer = async (data: {
       peerId: string;
       username: string;
       uid: string;
@@ -420,41 +430,46 @@ const Room: React.FC = () => {
       const { peerId, username } = data;
       if (peerId === socket.id) return;
 
-      console.log(`[new-peer-joined] ${username} (${peerId.substring(0, 5)})`);
-      setRemoteUsernames((prev) => new Map(prev).set(peerId, username));
+      console.log(`[new-peer-joined] ${username} (${peerId.slice(0, 5)})`);
+
+      // Registrar username aunque todavía no haya stream
+      upsertRemote(peerId, { username });
       setActiveUsers(data.activeUsers);
-      createPeerConnection(peerId);
+
+      // ✅ CRÍTICO: los peers EXISTENTES son quienes hacen la offer
+      const pc = createPeerConnection(peerId);
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit("signal", peerId, socket.id, offer);
+        // También enviar nuestro estado de media
+        socket.emit("signal", peerId, socket.id, {
+          type: "media-state",
+          isVideoOn: isVideoOnRef.current,
+          isMicOn: isMicOnRef.current,
+        });
+      } catch (err) {
+        console.error(`[new-peer-joined] error creando offer:`, err);
+      }
     };
 
-    const handleUserDisconnected = (peerId: string) => {
+    // ── Peer se desconectó ────────────────────────────────────────────────
+    const onUserDisconnected = (peerId: string) => {
+      console.log(`[userDisconnected] ${peerId.slice(0, 5)}`);
       const pc = peerConnectionsRef.current.get(peerId);
       if (pc) {
         pc.close();
         peerConnectionsRef.current.delete(peerId);
       }
-      // ✅ useState para usernames remotos
-      setRemoteUsernames((prev) => {
-        const next = new Map(prev);
-        next.delete(peerId);
-        return next;
-      });
-      setRemoteStreams((prev) => {
-        const next = new Map(prev);
-        next.delete(peerId);
-        return next;
-      });
-      setRemoteMediaStates((prev) => {
-        const next = new Map(prev);
-        next.delete(peerId);
-        return next;
-      });
+      removeRemote(peerId);
     };
 
-    socket.on("signal", handleSignal);
-    socket.on("new-peer-joined", handleNewPeer);
-    socket.on("userDisconnected", handleUserDisconnected);
+    // ── Registrar TODOS los listeners ANTES de emitir join-room ──────────
+    socket.on("signal", onSignal);
+    socket.on("new-peer-joined", onNewPeer);
+    socket.on("userDisconnected", onUserDisconnected);
 
-    socket.on("delete-room", (data: { roomId: string; message: string }) => {
+    socket.on("delete-room", (data: { message: string }) => {
       alert(data.message);
       navigate("/dashboard");
     });
@@ -468,37 +483,39 @@ const Room: React.FC = () => {
         activeUsers: ActiveUser[];
         mySocketId: string;
       }) => {
-        console.log(`[room-joined-success] users=${data.activeUsers.length}`);
+        console.log(
+          `[room-joined-success] myId=${data.mySocketId} peers=${data.activeUsers.length}`,
+        );
+        mySocketIdRef.current = data.mySocketId;
         setRoomName(data.roomName);
         setHostUid(data.hostUid);
         setActiveUsers(data.activeUsers);
         setIsValidating(false);
         setLoading(false);
 
-        const peersAlreadyInRoom = data.activeUsers.filter(
+        // ✅ El peer NUEVO hace la offer a todos los que ya estaban en la sala
+        const existingPeers = data.activeUsers.filter(
           (u) => u.socketId && u.socketId !== data.mySocketId,
         );
+        console.log(
+          `[room-joined-success] haré offer a ${existingPeers.length} peer(s)`,
+        );
 
-        console.log(`[room-joined-success] peersToOffer=${peersAlreadyInRoom.length}`);
-
-        for (const existingUser of peersAlreadyInRoom) {
-          setRemoteUsernames((prev) =>
-            new Map(prev).set(existingUser.socketId, existingUser.username),
-          );
+        for (const peer of existingPeers) {
+          upsertRemote(peer.socketId, { username: peer.username });
           try {
-            const pc = createPeerConnection(existingUser.socketId);
+            const pc = createPeerConnection(peer.socketId);
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
-            socket.emit("signal", existingUser.socketId, socket.id, offer);
-
-            socket.emit("signal", existingUser.socketId, socket.id, {
+            socket.emit("signal", peer.socketId, socket.id, offer);
+            socket.emit("signal", peer.socketId, socket.id, {
               type: "media-state",
               isVideoOn: isVideoOnRef.current,
               isMicOn: isMicOnRef.current,
             });
           } catch (err) {
             console.error(
-              `[room-joined] Error creando offer para ${existingUser.socketId}:`,
+              `[room-joined-success] error offer a ${peer.socketId.slice(0, 5)}:`,
               err,
             );
           }
@@ -513,6 +530,7 @@ const Room: React.FC = () => {
     });
 
     socket.on("error-msg", (msg: string) => setErrorMsg(msg));
+
     socket.on("room-history", (history: ChatMessage[]) => setMessages(history));
 
     socket.on(
@@ -553,7 +571,7 @@ const Room: React.FC = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    // ─── Emit AFTER all listeners are registered ────────────────────────
+    // ✅ Emitir join-room DESPUÉS de registrar todos los listeners
     socket.emit("join-room", {
       roomId,
       username: user.username || user.displayName || "Estudiante",
@@ -563,15 +581,13 @@ const Room: React.FC = () => {
     return () => {
       peerConnectionsRef.current.forEach((pc) => pc.close());
       peerConnectionsRef.current.clear();
-      setRemoteStreams(new Map());
-      setRemoteUsernames(new Map());
-      setRemoteMediaStates(new Map());
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       localStreamRef.current = null;
+      setRemotes(new Map());
 
-      socket.off("signal", handleSignal);
-      socket.off("new-peer-joined", handleNewPeer);
-      socket.off("userDisconnected", handleUserDisconnected);
+      socket.off("signal", onSignal);
+      socket.off("new-peer-joined", onNewPeer);
+      socket.off("userDisconnected", onUserDisconnected);
       socket.off("delete-room");
       socket.off("room-joined-success");
       socket.off("room-invalid");
@@ -582,49 +598,29 @@ const Room: React.FC = () => {
       socket.off("receive-message");
       disconnectSocket();
     };
-  }, [roomId, user, navigate, mediaReady]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [roomId, user?.uid]);
 
-  // ── 5. Auto scroll chat ────────────────────────────────────────────────────
+  // ── 5. Auto scroll chat ───────────────────────────────────────────────────
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ── 6. Sync remoteUsernames con activeUsers (fallback si eventos no llegan) ──
-  useEffect(() => {
-    if (!user?.uid || !socketRef.current?.id) return;
-    const mySocketId = socketRef.current.id;
-    setRemoteUsernames((prev) => {
-      const next = new Map(prev);
-      let changed = false;
-      activeUsers.forEach((u) => {
-        if (u.socketId && u.socketId !== mySocketId && !next.has(u.socketId)) {
-          next.set(u.socketId, u.username);
-          changed = true;
-        }
-      });
-      return changed ? next : prev;
-    });
-  }, [activeUsers, user?.uid]);
-
-  // ── 7. Controles media ─────────────────────────────────────────────────────
+  // ── 6. Controles ─────────────────────────────────────────────────────────
   const toggleMic = () => {
-    localStreamRef.current?.getAudioTracks().forEach((t) => {
-      t.enabled = !t.enabled;
-    });
-    const nextVal = !isMicOn;
-    setIsMicOn(nextVal);
-    isMicOnRef.current = nextVal;
-    broadcastMediaState(isVideoOnRef.current, nextVal);
+    const next = !isMicOn;
+    localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = next));
+    setIsMicOn(next);
+    isMicOnRef.current = next;
+    broadcastMediaState(isVideoOnRef.current, next);
   };
 
   const toggleVideo = () => {
-    localStreamRef.current?.getVideoTracks().forEach((t) => {
-      t.enabled = !t.enabled;
-    });
-    const nextVal = !isVideoOn;
-    setIsVideoOn(nextVal);
-    isVideoOnRef.current = nextVal;
-    broadcastMediaState(nextVal, isMicOnRef.current);
+    const next = !isVideoOn;
+    localStreamRef.current?.getVideoTracks().forEach((t) => (t.enabled = next));
+    setIsVideoOn(next);
+    isVideoOnRef.current = next;
+    broadcastMediaState(next, isMicOnRef.current);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -646,9 +642,7 @@ const Room: React.FC = () => {
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const isLocalSpeaking = useAudioAnalyser(localStream, !isMicOn);
-
-  // ── Renders de estado ──────────────────────────────────────────────────────
+  // ── Renders de estado ─────────────────────────────────────────────────────
   if (loading || isValidating) {
     return (
       <div className="room-status-page">
@@ -687,7 +681,7 @@ const Room: React.FC = () => {
     );
   }
 
-  // ── Render principal ───────────────────────────────────────────────────────
+  // ── Render principal ──────────────────────────────────────────────────────
   return (
     <div className="room-page">
       <div className="auth-bg">
@@ -728,14 +722,16 @@ const Room: React.FC = () => {
       <div className="room-grid">
         <div className="room-stage">
           <div className="room-video-container">
-            {/* ── Video local ──────────────────────────────────────────────── */}
-            <div className={`room-video-card ${isLocalSpeaking ? "speaking" : ""}`}>
+            {/* ── Video local ─────────────────────────────────────────────── */}
+            <div
+              className={`room-video-card${isLocalSpeaking ? " speaking" : ""}`}
+            >
               <video
                 ref={localVideoRef}
                 autoPlay
                 muted
                 playsInline
-                className={`room-video-feed ${isVideoOn ? "" : "room-video-feed--hidden"}`}
+                className={`room-video-feed${isVideoOn ? "" : " room-video-feed--hidden"}`}
               />
               {!isVideoOn && (
                 <div className="room-video-placeholder">
@@ -760,72 +756,50 @@ const Room: React.FC = () => {
                   <span className="room-status-sub">Cámara Apagada</span>
                 </div>
               )}
-
-              {/* Top right badges */}
               <div className="room-video-card-top-badges">
-                <span className={`media-status-badge ${isMicOn ? "active" : "muted"}`}>
+                <span
+                  className={`media-status-badge ${isMicOn ? "active" : "muted"}`}
+                >
                   {isMicOn ? <LuMic size={14} /> : <LuMicOff size={14} />}
                 </span>
-                <span className={`media-status-badge ${isVideoOn ? "active" : "muted"}`}>
+                <span
+                  className={`media-status-badge ${isVideoOn ? "active" : "muted"}`}
+                >
                   {isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
                 </span>
               </div>
-
               <div className="room-participant-labels">
-                <span className="participant-badge-name flex items-center gap-1.5" style={{ display: 'inline-flex', alignItems: 'center' }}>
-                  {isLocalSpeaking && <span className="speaking-indicator-dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', marginRight: '6px' }} />}
+                <span
+                  className="participant-badge-name"
+                  style={{
+                    display: "inline-flex",
+                    alignItems: "center",
+                    gap: 6,
+                  }}
+                >
+                  {isLocalSpeaking && (
+                    <span
+                      style={{
+                        width: 8,
+                        height: 8,
+                        borderRadius: "50%",
+                        background: "#22c55e",
+                        display: "inline-block",
+                      }}
+                    />
+                  )}
                   Tú
                 </span>
               </div>
             </div>
 
-            {/* ── Videos remotos ───────────────────────────────────────────── */}
-            {Array.from(remoteUsernames.entries()).map(([peerId, username]) => {
-              const stream = remoteStreams.get(peerId);
-              const remoteMedia = remoteMediaStates.get(peerId) || { isVideoOn: false, isMicOn: false };
-              if (stream) {
-                return (
-                  <RemoteVideo
-                    key={peerId}
-                    peerId={peerId}
-                    stream={stream}
-                    username={username}
-                    isMuted={!remoteMedia.isMicOn}
-                    isVideoOn={remoteMedia.isVideoOn}
-                  />
-                );
-              }
-              return (
-                <div key={peerId} className="room-video-card">
-                  <div className="room-video-placeholder">
-                    <div className="room-video-avatar-fallback">
-                      {username.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="room-video-name">@{username}</span>
-                    <span className="room-status-sub">Conectando...</span>
-                  </div>
-
-                  {/* Top right badges */}
-                  <div className="room-video-card-top-badges">
-                    <span className={`media-status-badge ${remoteMedia.isMicOn ? "active" : "muted"}`}>
-                      {remoteMedia.isMicOn ? <LuMic size={14} /> : <LuMicOff size={14} />}
-                    </span>
-                    <span className={`media-status-badge ${remoteMedia.isVideoOn ? "active" : "muted"}`}>
-                      {remoteMedia.isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
-                    </span>
-                  </div>
-
-                  <div className="room-participant-labels">
-                    <span className="participant-badge-name">
-                      @{username} ({peerId.substring(0, 5)})
-                    </span>
-                  </div>
-                </div>
-              );
-            })}
+            {/* ── Videos remotos — uno por entrada en `remotes` ────────────── */}
+            {Array.from(remotes.entries()).map(([peerId, state]) => (
+              <RemoteVideo key={peerId} peerId={peerId} state={state} />
+            ))}
           </div>
 
-          {/* ── Controles ──────────────────────────────────────────────────── */}
+          {/* ── Controles ─────────────────────────────────────────────────── */}
           <div className="room-controls-bar">
             <button
               onClick={toggleMic}
@@ -833,19 +807,16 @@ const Room: React.FC = () => {
                 !localStream || localStream.getAudioTracks().length === 0
               }
               className={`room-control-btn ${isMicOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
-              title={isMicOn ? "Silenciar Micrófono" : "Activar Micrófono"}
             >
               {isMicOn ? <LuMic size={20} /> : <LuMicOff size={20} />}
               <span>{isMicOn ? "Mic Activo" : "Silenciado"}</span>
             </button>
-
             <button
               onClick={toggleVideo}
               disabled={
                 !localStream || localStream.getVideoTracks().length === 0
               }
               className={`room-control-btn ${isVideoOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
-              title={isVideoOn ? "Apagar Cámara" : "Encender Cámara"}
             >
               {isVideoOn ? <LuVideo size={20} /> : <LuVideoOff size={20} />}
               <span>{isVideoOn ? "Cámara Activa" : "Cámara Off"}</span>
@@ -853,7 +824,7 @@ const Room: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Sidebar ────────────────────────────────────────────────────────── */}
+        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
         <aside className="room-sidebar">
           <div className="room-sidebar-section room-users-section">
             <div className="section-header">
@@ -895,7 +866,6 @@ const Room: React.FC = () => {
                 messages.map((msg) => {
                   const isSystem = msg.senderUid === "system";
                   const isMe = msg.senderUid === user?.uid;
-
                   if (isSystem) {
                     return (
                       <div key={msg.id} className="chat-msg chat-msg--system">
@@ -903,7 +873,6 @@ const Room: React.FC = () => {
                       </div>
                     );
                   }
-
                   return (
                     <div
                       key={msg.id}
@@ -923,7 +892,6 @@ const Room: React.FC = () => {
               )}
               <div ref={chatEndRef} />
             </div>
-
             <form onSubmit={handleSendMessage} className="chat-input-form">
               <input
                 type="text"
