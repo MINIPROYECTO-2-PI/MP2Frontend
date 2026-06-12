@@ -44,14 +44,86 @@ interface ActiveUser {
   uid: string;
 }
 
+// ─── Detector de voz (Audio Analyser) ─────────────────────────────────────────
+const useAudioAnalyser = (stream: MediaStream | null, isMuted: boolean = false) => {
+  const [isSpeaking, setIsSpeaking] = useState(false);
+
+  useEffect(() => {
+    if (!stream || isMuted) {
+      setIsSpeaking(false);
+      return;
+    }
+
+    const audioTracks = stream.getAudioTracks();
+    if (audioTracks.length === 0) {
+      setIsSpeaking(false);
+      return;
+    }
+
+    let audioContext: AudioContext | null = null;
+    let source: MediaStreamAudioSourceNode | null = null;
+    let analyser: AnalyserNode | null = null;
+    let animationFrameId: number;
+
+    try {
+      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      audioContext = new AudioContextClass();
+      source = audioContext.createMediaStreamSource(stream);
+      analyser = audioContext.createAnalyser();
+      analyser.fftSize = 512;
+      source.connect(analyser);
+
+      const bufferLength = analyser.frequencyBinCount;
+      const dataArray = new Uint8Array(bufferLength);
+
+      let speakingCounter = 0;
+
+      const checkVolume = () => {
+        if (!analyser || !audioContext || audioContext.state === 'closed') return;
+        analyser.getByteFrequencyData(dataArray);
+
+        let sum = 0;
+        for (let i = 0; i < bufferLength; i++) {
+          sum += dataArray[i];
+        }
+        const average = sum / bufferLength;
+
+        if (average > 15) {
+          speakingCounter = Math.min(speakingCounter + 1, 10);
+        } else {
+          speakingCounter = Math.max(speakingCounter - 1, 0);
+        }
+
+        setIsSpeaking(speakingCounter > 2);
+        animationFrameId = requestAnimationFrame(checkVolume);
+      };
+
+      checkVolume();
+    } catch (err) {
+      console.warn("Error initializing Audio Analyser:", err);
+    }
+
+    return () => {
+      cancelAnimationFrame(animationFrameId);
+      if (source) source.disconnect();
+      if (audioContext) audioContext.close();
+    };
+  }, [stream, isMuted]);
+
+  return isSpeaking;
+};
+
 // ─── Video remoto ─────────────────────────────────────────────────────────────
 const RemoteVideo: React.FC<{
   peerId: string;
   stream: MediaStream;
   username: string;
-}> = ({ peerId, stream, username }) => {
+  isMuted: boolean;
+  isVideoOn: boolean;
+}> = ({ peerId, stream, username, isMuted, isVideoOn }) => {
   const videoRef = useRef<HTMLVideoElement>(null);
   const [hasVideo, setHasVideo] = useState(false);
+  const isSpeaking = useAudioAnalyser(stream, isMuted);
 
   useEffect(() => {
     if (!videoRef.current) return;
@@ -74,15 +146,17 @@ const RemoteVideo: React.FC<{
     };
   }, [stream]);
 
+  const showVideo = isVideoOn && hasVideo;
+
   return (
-    <div className="room-video-card">
+    <div className={`room-video-card ${isSpeaking ? "speaking" : ""}`}>
       <video
         ref={videoRef}
         autoPlay
         playsInline
-        className={`room-video-feed ${hasVideo ? "" : "room-video-feed--hidden"}`}
+        className={`room-video-feed ${showVideo ? "" : "room-video-feed--hidden"}`}
       />
-      {!hasVideo && (
+      {!showVideo && (
         <div className="room-video-placeholder">
           <div className="room-video-avatar-fallback">
             {username ? username.charAt(0).toUpperCase() : <LuUser size={40} />}
@@ -91,8 +165,20 @@ const RemoteVideo: React.FC<{
           <span className="room-status-sub">Cámara Apagada</span>
         </div>
       )}
+      
+      {/* Top right badges */}
+      <div className="room-video-card-top-badges">
+        <span className={`media-status-badge ${!isMuted ? "active" : "muted"}`}>
+          {!isMuted ? <LuMic size={14} /> : <LuMicOff size={14} />}
+        </span>
+        <span className={`media-status-badge ${isVideoOn ? "active" : "muted"}`}>
+          {isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
+        </span>
+      </div>
+
       <div className="room-participant-labels">
-        <span className="participant-badge-name">
+        <span className="participant-badge-name flex items-center gap-1.5" style={{ display: 'inline-flex', alignItems: 'center' }}>
+          {isSpeaking && <span className="speaking-indicator-dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', marginRight: '6px' }} />}
           @{username} ({peerId.substring(0, 5)})
         </span>
       </div>
@@ -131,6 +217,29 @@ const Room: React.FC = () => {
   const [remoteUsernames, setRemoteUsernames] = useState<Map<string, string>>(
     new Map(),
   );
+  const [remoteMediaStates, setRemoteMediaStates] = useState<Map<string, { isVideoOn: boolean; isMicOn: boolean }>>(
+    new Map(),
+  );
+
+  const isVideoOnRef = useRef(isVideoOn);
+  const isMicOnRef = useRef(isMicOn);
+  useEffect(() => {
+    isVideoOnRef.current = isVideoOn;
+  }, [isVideoOn]);
+  useEffect(() => {
+    isMicOnRef.current = isMicOn;
+  }, [isMicOn]);
+
+  const broadcastMediaState = (videoState: boolean, micState: boolean) => {
+    if (!socketRef.current) return;
+    peerConnectionsRef.current.forEach((_, peerId) => {
+      socketRef.current?.emit("signal", peerId, socketRef.current.id, {
+        type: "media-state",
+        isVideoOn: videoState,
+        isMicOn: micState,
+      });
+    });
+  };
 
   // ── 1. Permisos de media con fallback ─────────────────────────────────────
   useEffect(() => {
@@ -239,9 +348,19 @@ const Room: React.FC = () => {
     const handleSignal = async (
       _to: string,
       from: string,
-      data: RTCSessionDescriptionInit & { candidate?: RTCIceCandidateInit },
+      data: any,
     ) => {
       if (from === socket.id) return;
+
+      if (data.type === "media-state") {
+        const { isVideoOn: remoteVideoOn, isMicOn: remoteMicOn } = data;
+        setRemoteMediaStates((prev) => {
+          const next = new Map(prev);
+          next.set(from, { isVideoOn: !!remoteVideoOn, isMicOn: !!remoteMicOn });
+          return next;
+        });
+        return;
+      }
 
       let pc = peerConnectionsRef.current.get(from);
       if (!pc) pc = createPeerConnection(from);
@@ -256,12 +375,26 @@ const Room: React.FC = () => {
             const answer = await pc.createAnswer();
             await pc.setLocalDescription(answer);
             socket.emit("signal", from, socket.id, answer);
+
+            // Send our media state to the peer who offered
+            socket.emit("signal", from, socket.id, {
+              type: "media-state",
+              isVideoOn: isVideoOnRef.current,
+              isMicOn: isMicOnRef.current,
+            });
           } else {
             console.warn(`[offer] Estado inesperado: ${pc.signalingState}`);
           }
         } else if (data.type === "answer") {
           if (pc.signalingState === "have-local-offer") {
             await pc.setRemoteDescription(new RTCSessionDescription(data));
+            
+            // Send our media state to the peer who answered
+            socket.emit("signal", from, socket.id, {
+              type: "media-state",
+              isVideoOn: isVideoOnRef.current,
+              isMicOn: isMicOnRef.current,
+            });
           } else {
             console.warn(`[answer] Estado inesperado: ${pc.signalingState}`);
           }
@@ -307,6 +440,11 @@ const Room: React.FC = () => {
         return next;
       });
       setRemoteStreams((prev) => {
+        const next = new Map(prev);
+        next.delete(peerId);
+        return next;
+      });
+      setRemoteMediaStates((prev) => {
         const next = new Map(prev);
         next.delete(peerId);
         return next;
@@ -357,6 +495,13 @@ const Room: React.FC = () => {
             const offer = await pc.createOffer();
             await pc.setLocalDescription(offer);
             socket.emit("signal", existingUser.socketId, socket.id, offer);
+
+            // Send our initial media state!
+            socket.emit("signal", existingUser.socketId, socket.id, {
+              type: "media-state",
+              isVideoOn: isVideoOnRef.current,
+              isMicOn: isMicOnRef.current,
+            });
           } catch (err) {
             console.error(
               `[room-joined] Error creando offer para ${existingUser.socketId}:`,
@@ -446,14 +591,20 @@ const Room: React.FC = () => {
     localStreamRef.current?.getAudioTracks().forEach((t) => {
       t.enabled = !t.enabled;
     });
-    setIsMicOn((prev) => !prev);
+    const nextVal = !isMicOn;
+    setIsMicOn(nextVal);
+    isMicOnRef.current = nextVal;
+    broadcastMediaState(isVideoOnRef.current, nextVal);
   };
 
   const toggleVideo = () => {
     localStreamRef.current?.getVideoTracks().forEach((t) => {
       t.enabled = !t.enabled;
     });
-    setIsVideoOn((prev) => !prev);
+    const nextVal = !isVideoOn;
+    setIsVideoOn(nextVal);
+    isVideoOnRef.current = nextVal;
+    broadcastMediaState(nextVal, isMicOnRef.current);
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -474,6 +625,8 @@ const Room: React.FC = () => {
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
+
+  const isLocalSpeaking = useAudioAnalyser(localStream, !isMicOn);
 
   // ── Renders de estado ──────────────────────────────────────────────────────
   if (loading || isValidating) {
@@ -556,7 +709,7 @@ const Room: React.FC = () => {
         <div className="room-stage">
           <div className="room-video-container">
             {/* ── Video local ──────────────────────────────────────────────── */}
-            <div className="room-video-card">
+            <div className={`room-video-card ${isLocalSpeaking ? "speaking" : ""}`}>
               <video
                 ref={localVideoRef}
                 autoPlay
@@ -587,17 +740,29 @@ const Room: React.FC = () => {
                   <span className="room-status-sub">Cámara Apagada</span>
                 </div>
               )}
+
+              {/* Top right badges */}
+              <div className="room-video-card-top-badges">
+                <span className={`media-status-badge ${isMicOn ? "active" : "muted"}`}>
+                  {isMicOn ? <LuMic size={14} /> : <LuMicOff size={14} />}
+                </span>
+                <span className={`media-status-badge ${isVideoOn ? "active" : "muted"}`}>
+                  {isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
+                </span>
+              </div>
+
               <div className="room-participant-labels">
-                <span className="participant-badge-name">Tú</span>
-                {!isMicOn && (
-                  <span className="participant-badge-muted">Silenciado</span>
-                )}
+                <span className="participant-badge-name flex items-center gap-1.5" style={{ display: 'inline-flex', alignItems: 'center' }}>
+                  {isLocalSpeaking && <span className="speaking-indicator-dot" style={{ display: 'inline-block', width: '8px', height: '8px', borderRadius: '50%', backgroundColor: '#22c55e', marginRight: '6px' }} />}
+                  Tú
+                </span>
               </div>
             </div>
 
             {/* ── Videos remotos ───────────────────────────────────────────── */}
             {Array.from(remoteUsernames.entries()).map(([peerId, username]) => {
               const stream = remoteStreams.get(peerId);
+              const remoteMedia = remoteMediaStates.get(peerId) || { isVideoOn: false, isMicOn: false };
               if (stream) {
                 return (
                   <RemoteVideo
@@ -605,6 +770,8 @@ const Room: React.FC = () => {
                     peerId={peerId}
                     stream={stream}
                     username={username}
+                    isMuted={!remoteMedia.isMicOn}
+                    isVideoOn={remoteMedia.isVideoOn}
                   />
                 );
               }
@@ -617,6 +784,17 @@ const Room: React.FC = () => {
                     <span className="room-video-name">@{username}</span>
                     <span className="room-status-sub">Conectando...</span>
                   </div>
+
+                  {/* Top right badges */}
+                  <div className="room-video-card-top-badges">
+                    <span className={`media-status-badge ${remoteMedia.isMicOn ? "active" : "muted"}`}>
+                      {remoteMedia.isMicOn ? <LuMic size={14} /> : <LuMicOff size={14} />}
+                    </span>
+                    <span className={`media-status-badge ${remoteMedia.isVideoOn ? "active" : "muted"}`}>
+                      {remoteMedia.isVideoOn ? <LuVideo size={14} /> : <LuVideoOff size={14} />}
+                    </span>
+                  </div>
+
                   <div className="room-participant-labels">
                     <span className="participant-badge-name">
                       @{username} ({peerId.substring(0, 5)})
