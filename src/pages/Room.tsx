@@ -366,6 +366,8 @@ const Room: React.FC = () => {
     tryGetMedia();
     return () => {
       mounted = false;
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -663,8 +665,6 @@ const Room: React.FC = () => {
     return () => {
       peerConnectionsRef.current.forEach((pc) => pc.close());
       peerConnectionsRef.current.clear();
-      localStreamRef.current?.getTracks().forEach((t) => t.stop());
-      localStreamRef.current = null;
       setRemotes(new Map());
 
       socket.off("connect", handleConnect);
