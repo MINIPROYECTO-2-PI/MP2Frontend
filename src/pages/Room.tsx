@@ -426,12 +426,13 @@ const Room: React.FC = () => {
   // ── 2.5 Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
     if (localVideoRef.current && localStream) {
+      console.log("[Room] Vinculando stream local al elemento video...");
       localVideoRef.current.srcObject = localStream;
       localVideoRef.current.play().catch((err) => {
         console.warn("[Room] Error al reproducir video local:", err);
       });
     }
-  }, [localStream]);
+  }, [localStream, loading]);
 
   // ── 3. Crear peer connection ──────────────────────────────────────────────
   const createPeerConnection = useCallback(
