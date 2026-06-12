@@ -40,6 +40,7 @@ interface ChatMessage {
 }
 
 interface ActiveUser {
+  socketId: string;
   username: string;
   uid: string;
 }
@@ -251,7 +252,8 @@ const Room: React.FC = () => {
     };
 
     const handleNewUser = async (newPeerId: string) => {
-      if (newPeerId === socket.id) return; // Ignorar si somos nosotros mismos
+      if (newPeerId === socket.id) return;
+      if (peerConnectionsRef.current.has(newPeerId)) return;
 
       const pc = createPeerConnection(newPeerId);
       try {
@@ -304,6 +306,20 @@ const Room: React.FC = () => {
         setActiveUsers(data.activeUsers);
         setIsValidating(false);
         setLoading(false);
+
+        const currentSocketId = socket.id;
+        data.activeUsers
+          .filter((u) => u.socketId && u.socketId !== currentSocketId)
+          .forEach(async (user) => {
+            try {
+              const pc = createPeerConnection(user.socketId);
+              const offer = await pc.createOffer();
+              await pc.setLocalDescription(offer);
+              socket.emit("signal", user.socketId, socket.id, offer);
+            } catch (err) {
+              console.error(`Error creando oferta para ${user.socketId}:`, err);
+            }
+          });
       },
     );
 

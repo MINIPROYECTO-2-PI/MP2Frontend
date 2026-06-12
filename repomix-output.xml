@@ -70,6 +70,7 @@ src/
     Home.tsx
     Join.tsx
     Login.tsx
+    MP2Frontend.code-workspace
     Profile.tsx
     Register.tsx
     Room.tsx
@@ -80,6 +81,7 @@ src/
   App.css
   index.css
   main.tsx
+.env.example
 .gitignore
 components.json
 eslint.config.js
@@ -89,46 +91,12 @@ README.md
 tsconfig.app.json
 tsconfig.json
 tsconfig.node.json
+vercel.json
 vite.config.ts
 </directory_structure>
 
 <files>
 This section contains the contents of the repository's files.
-
-<file path="src/services/socket.ts">
-import { io, type Socket } from "socket.io-client";
-
-const SOCKET_URL = "http://localhost:3001";
-
-let socket: Socket | null = null;
-
-export function connectSocket(): Socket {
-  if (!socket) {
-    socket = io(SOCKET_URL, {
-      autoConnect: false,
-      reconnection: true,
-      reconnectionAttempts: 5,
-      reconnectionDelay: 1000,
-    });
-  }
-  if (!socket.connected) {
-    socket.connect();
-  }
-  return socket;
-}
-
-export function disconnectSocket(): void {
-  if (socket?.connected) {
-    socket.disconnect();
-  }
-}
-
-export function getSocket(): Socket | null {
-  return socket;
-}
-
-export type { Socket };
-</file>
 
 <file path="public/favicon.svg">
 <svg xmlns="http://www.w3.org/2000/svg" width="48" height="46" fill="none" viewBox="0 0 48 46"><path fill="#863bff" d="M25.946 44.938c-.664.845-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.287c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.497 0-3.578-1.842-3.578H1.237c-.92 0-1.456-1.04-.92-1.788L10.013.474c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.579 1.842 3.579h11.377c.943 0 1.473 1.088.89 1.83L25.947 44.94z" style="fill:#863bff;fill:color(display-p3 .5252 .23 1);fill-opacity:1"/><mask id="a" width="48" height="46" x="0" y="0" maskUnits="userSpaceOnUse" style="mask-type:alpha"><path fill="#000" d="M25.842 44.938c-.664.844-2.021.375-2.021-.698V33.937a2.26 2.26 0 0 0-2.262-2.262H10.183c-.92 0-1.456-1.04-.92-1.788l7.48-10.471c1.07-1.498 0-3.579-1.842-3.579H1.133c-.92 0-1.456-1.04-.92-1.787L9.91.473c.214-.297.556-.474.92-.474h28.894c.92 0 1.456 1.04.92 1.788l-7.48 10.471c-1.07 1.498 0 3.578 1.842 3.578h11.377c.943 0 1.473 1.088.89 1.832L25.843 44.94z" style="fill:#000;fill-opacity:1"/></mask><g mask="url(#a)"><g filter="url(#b)"><ellipse cx="5.508" cy="14.704" fill="#ede6ff" rx="5.508" ry="14.704" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -4.47 31.516)"/></g><g filter="url(#c)"><ellipse cx="10.399" cy="29.851" fill="#ede6ff" rx="10.399" ry="29.851" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -39.328 7.883)"/></g><g filter="url(#d)"><ellipse cx="5.508" cy="30.487" fill="#7e14ff" rx="5.508" ry="30.487" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -25.913 -14.639)scale(1 -1)"/></g><g filter="url(#e)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.814 -32.644 -3.334)scale(1 -1)"/></g><g filter="url(#f)"><ellipse cx="5.508" cy="30.599" fill="#7e14ff" rx="5.508" ry="30.599" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="matrix(.00324 1 1 -.00324 -34.34 30.47)"/></g><g filter="url(#g)"><ellipse cx="14.072" cy="22.078" fill="#ede6ff" rx="14.072" ry="22.078" style="fill:#ede6ff;fill:color(display-p3 .9275 .9033 1);fill-opacity:1" transform="rotate(93.35 24.506 48.493)scale(-1 1)"/></g><g filter="url(#h)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#i)"><ellipse cx="3.47" cy="21.501" fill="#7e14ff" rx="3.47" ry="21.501" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(89.009 28.708 47.59)scale(-1 1)"/></g><g filter="url(#j)"><ellipse cx=".387" cy="8.972" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(39.51 .387 8.972)"/></g><g filter="url(#k)"><ellipse cx="47.523" cy="-6.092" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 47.523 -6.092)"/></g><g filter="url(#l)"><ellipse cx="41.412" cy="6.333" fill="#47bfff" rx="5.971" ry="9.665" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 41.412 6.333)"/></g><g filter="url(#m)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#n)"><ellipse cx="-1.879" cy="38.332" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 -1.88 38.332)"/></g><g filter="url(#o)"><ellipse cx="35.651" cy="29.907" fill="#7e14ff" rx="4.407" ry="29.108" style="fill:#7e14ff;fill:color(display-p3 .4922 .0767 1);fill-opacity:1" transform="rotate(37.892 35.651 29.907)"/></g><g filter="url(#p)"><ellipse cx="38.418" cy="32.4" fill="#47bfff" rx="5.971" ry="15.297" style="fill:#47bfff;fill:color(display-p3 .2799 .748 1);fill-opacity:1" transform="rotate(37.892 38.418 32.4)"/></g></g><defs><filter id="b" width="60.045" height="41.654" x="-19.77" y="16.149" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="c" width="90.34" height="51.437" x="-54.613" y="-7.533" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="d" width="79.355" height="29.4" x="-49.64" y="2.03" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="e" width="79.579" height="29.4" x="-45.045" y="20.029" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="f" width="79.579" height="29.4" x="-43.513" y="21.178" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="g" width="74.749" height="58.852" x="15.756" y="-17.901" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="7.659"/></filter><filter id="h" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="i" width="61.377" height="25.362" x="23.548" y="2.284" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="j" width="56.045" height="63.649" x="-27.636" y="-22.853" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="k" width="54.814" height="64.646" x="20.116" y="-38.415" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="l" width="33.541" height="35.313" x="24.641" y="-11.323" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="m" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="n" width="54.814" height="64.646" x="-29.286" y="6.009" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="o" width="54.814" height="64.646" x="8.244" y="-2.416" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter><filter id="p" width="39.409" height="43.623" x="18.713" y="10.588" color-interpolation-filters="sRGB" filterUnits="userSpaceOnUse"><feFlood flood-opacity="0" result="BackgroundImageFix"/><feBlend in="SourceGraphic" in2="BackgroundImageFix" result="shape"/><feGaussianBlur result="effect1_foregroundBlur_2002_17158" stdDeviation="4.596"/></filter></defs></svg>
@@ -651,494 +619,741 @@ const Create: React.FC = () => {
 export default Create;
 </file>
 
-<file path="src/pages/Dashboard.tsx">
-import React, { useEffect, useState, useRef } from "react";
-import { useAuth } from "../contexts/AuthContext";
-import { User } from "../services/auth";
-import type { RoomData } from "../services/auth";
-import { useNavigate } from "react-router-dom";
-import { MdDelete } from "react-icons/md";
-import {
-  connectSocket,
-  disconnectSocket,
-  getSocket,
-  type Socket,
-} from "../services/socket";
-import {
-  LuVideo,
-  LuPlus,
-  LuDoorOpen,
-  LuCopy,
-  LuCheck,
-  LuCircleAlert,
-  LuLoaderCircle,
-  LuLayoutDashboard,
-  LuLogOut,
-  LuUser,
-  LuClock,
-  LuHash,
-  LuSparkles,
-  LuShieldAlert,
-  LuTrash2,
-} from "react-icons/lu";
+<file path="src/pages/MP2Frontend.code-workspace">
+{
+  "folders": [
+	{
+		"path": "../.."
+	},
+	{
+		"path": "../../../MP2BackendPrincipal"
+	},
+	{
+		"path": "../../../MP2BackendRT"
+	}
+],
+  "settings": {}
+}
+</file>
 
-const Dashboard: React.FC = () => {
-  const { user, logout } = useAuth();
-  const navigate = useNavigate();
-  const socketRef = useRef<Socket | null>(null);
-  const userRef = useRef(user);
+<file path="src/App.css">
+.counter {
+  font-size: 16px;
+  padding: 5px 10px;
+  border-radius: 5px;
+  color: var(--accent);
+  background: var(--accent-bg);
+  border: 2px solid transparent;
+  transition: border-color 0.3s;
+  margin-bottom: 24px;
 
-  const [rooms, setRooms] = useState<RoomData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [creating, setCreating] = useState(false);
-  const [showCreateForm, setShowCreateForm] = useState(false);
-  const [roomName, setRoomName] = useState("");
-  const [successMsg, setSuccessMsg] = useState("");
-  const [errorMsg, setErrorMsg] = useState("");
-  const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [deleteRoom, setDeleteRoom] = useState(false);
-  const [deleting, setDeleting] = useState(false);
-  const [roomDeleted, setRoomDeleted] = useState(false);
-  const [isAdmin, setIsAdmin] = useState(false);
-  const handleDeleteRoom = () => {
-    setDeleteRoom(!deleteRoom);
-  };
+  &:hover {
+    border-color: var(--accent-border);
+  }
+  &:focus-visible {
+    outline: 2px solid var(--accent);
+    outline-offset: 2px;
+  }
+}
 
-  useEffect(() => {
-    userRef.current = user;
-  }, [user]);
-  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
-  const socketDeleteRoom = () => {
-    if (!roomToDelete || !socketRef.current) return;
-    console.log("¿Conectado?", socketRef.current.connected);
-    setDeleting(true);
-    socketRef.current?.emit("delete-room", {
-      roomId: roomToDelete,
-      uid: user!.uid,
-    });
-    console.log(roomToDelete, user!.uid);
-  };
-  useEffect(() => {
-    socketRef.current = connectSocket();
+.hero {
+  position: relative;
 
-    socketRef.current.on(
-      "room-deleted",
-      (data: { roomId: string; message: string; uid: string }) => {
-        console.log("userRef.uid:", userRef.current?.uid); // ✅ ya no es stale
-        console.log("data.uid:", data.uid);
-        const isHost = userRef.current?.uid === data.uid; // ✅
-        setIsAdmin(isHost);
-        setDeleteRoom(false);
-        setRoomDeleted(true);
-        setDeleting(false);
+  .base,
+  .framework,
+  .vite {
+    inset-inline: 0;
+    margin: 0 auto;
+  }
 
-        setRooms((prev) => prev.filter((room) => room.roomId !== data.roomId));
+  .base {
+    width: 170px;
+    position: relative;
+    z-index: 0;
+  }
 
-        setTimeout(() => {
-          setRoomDeleted(false);
-        }, 3000);
+  .framework,
+  .vite {
+    position: absolute;
+  }
 
-        const { roomId, message } = data;
+  .framework {
+    z-index: 1;
+    top: 34px;
+    height: 28px;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
+      scale(1.4);
+  }
+
+  .vite {
+    z-index: 0;
+    top: 107px;
+    height: 26px;
+    width: auto;
+    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
+      scale(0.8);
+  }
+}
+
+#center {
+  display: flex;
+  flex-direction: column;
+  gap: 25px;
+  place-content: center;
+  place-items: center;
+  flex-grow: 1;
+
+  @media (max-width: 1024px) {
+    padding: 32px 20px 24px;
+    gap: 18px;
+  }
+}
+
+#next-steps {
+  display: flex;
+  border-top: 1px solid var(--border);
+  text-align: left;
+
+  & > div {
+    flex: 1 1 0;
+    padding: 32px;
+    @media (max-width: 1024px) {
+      padding: 24px 20px;
+    }
+  }
+
+  .icon {
+    margin-bottom: 16px;
+    width: 22px;
+    height: 22px;
+  }
+
+  @media (max-width: 1024px) {
+    flex-direction: column;
+    text-align: center;
+  }
+}
+
+#docs {
+  border-right: 1px solid var(--border);
+
+  @media (max-width: 1024px) {
+    border-right: none;
+    border-bottom: 1px solid var(--border);
+  }
+}
+
+#next-steps ul {
+  list-style: none;
+  padding: 0;
+  display: flex;
+  gap: 8px;
+  margin: 32px 0 0;
+
+  .logo {
+    height: 18px;
+  }
+
+  a {
+    color: var(--text-h);
+    font-size: 16px;
+    border-radius: 6px;
+    background: var(--social-bg);
+    display: flex;
+    padding: 6px 12px;
+    align-items: center;
+    gap: 8px;
+    text-decoration: none;
+    transition: box-shadow 0.3s;
+
+    &:hover {
+      box-shadow: var(--shadow);
+    }
+    .button-icon {
+      height: 18px;
+      width: 18px;
+    }
+  }
+
+  @media (max-width: 1024px) {
+    margin-top: 20px;
+    flex-wrap: wrap;
+    justify-content: center;
+
+    li {
+      flex: 1 1 calc(50% - 8px);
+    }
+
+    a {
+      width: 100%;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+  }
+}
+
+#spacer {
+  height: 88px;
+  border-top: 1px solid var(--border);
+  @media (max-width: 1024px) {
+    height: 48px;
+  }
+}
+
+.ticks {
+  position: relative;
+  width: 100%;
+
+  &::before,
+  &::after {
+    content: '';
+    position: absolute;
+    top: -4.5px;
+    border: 5px solid transparent;
+  }
+
+  &::before {
+    left: 0;
+    border-left-color: var(--border);
+  }
+  &::after {
+    right: 0;
+    border-right-color: var(--border);
+  }
+}
+</file>
+
+<file path="components.json">
+{
+  "$schema": "https://ui.shadcn.com/schema.json",
+  "style": "radix-nova",
+  "rsc": false,
+  "tsx": true,
+  "tailwind": {
+    "config": "",
+    "css": "src/index.css",
+    "baseColor": "neutral",
+    "cssVariables": true,
+    "prefix": ""
+  },
+  "iconLibrary": "lucide",
+  "rtl": false,
+  "aliases": {
+    "components": "@/components",
+    "utils": "@/lib/utils",
+    "ui": "@/components/ui",
+    "lib": "@/lib",
+    "hooks": "@/hooks"
+  },
+  "menuColor": "default",
+  "menuAccent": "subtle",
+  "registries": {}
+}
+</file>
+
+<file path="eslint.config.js">
+import js from '@eslint/js'
+import globals from 'globals'
+import reactHooks from 'eslint-plugin-react-hooks'
+import reactRefresh from 'eslint-plugin-react-refresh'
+import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from 'eslint/config'
+
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      js.configs.recommended,
+      tseslint.configs.recommended,
+      reactHooks.configs.flat.recommended,
+      reactRefresh.configs.vite,
+    ],
+    languageOptions: {
+      globals: globals.browser,
+    },
+  },
+])
+</file>
+
+<file path="index.html">
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mp2frontend</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
+</file>
+
+<file path="README.md">
+# React + TypeScript + Vite
+
+This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+
+Currently, two official plugins are available:
+
+- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
+- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
+
+## React Compiler
+
+The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+
+Note: This will impact Vite dev & build performances.
+
+## Expanding the ESLint configuration
+
+If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+
+```js
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+
+      // Remove tseslint.configs.recommended and replace with this
+      tseslint.configs.recommendedTypeChecked,
+      // Alternatively, use this for stricter rules
+      tseslint.configs.strictTypeChecked,
+      // Optionally, add this for stylistic rules
+      tseslint.configs.stylisticTypeChecked,
+
+      // Other configs...
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
       },
-    );
-    return () => {
-      socketRef.current?.off("room-deleted");
-      disconnectSocket();
-    };
-  }, []);
-  const fetchRooms = async () => {
-    try {
-      setLoading(true);
-      const result = await User.getRooms(user!.uid);
-      setRooms(result.rooms);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Error al cargar salas");
-    } finally {
-      setLoading(false);
-    }
-  };
-  useEffect(() => {
-    if (user?.uid) {
-      fetchRooms();
-    }
-  }, [user?.uid]);
+      // other options...
+    },
+  },
+])
+```
 
-  const handleCreateRoom = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-    setSuccessMsg("");
+You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
 
-    if (!roomName.trim()) {
-      setErrorMsg("El nombre de la sala es requerido");
-      return;
-    }
+```js
+// eslint.config.js
+import reactX from 'eslint-plugin-react-x'
+import reactDom from 'eslint-plugin-react-dom'
 
-    setCreating(true);
-    try {
-      const result = await User.createRoom({
-        name: roomName.trim(),
-        hostUid: user!.uid,
-        hostUsername: user!.username || "anónimo",
-      });
+export default defineConfig([
+  globalIgnores(['dist']),
+  {
+    files: ['**/*.{ts,tsx}'],
+    extends: [
+      // Other configs...
+      // Enable lint rules for React
+      reactX.configs['recommended-typescript'],
+      // Enable lint rules for React DOM
+      reactDom.configs.recommended,
+    ],
+    languageOptions: {
+      parserOptions: {
+        project: ['./tsconfig.node.json', './tsconfig.app.json'],
+        tsconfigRootDir: import.meta.dirname,
+      },
+      // other options...
+    },
+  },
+])
+```
+</file>
 
-      setRooms((prev) => [result.room, ...prev]);
-      setRoomName("");
-      setShowCreateForm(false);
-      setSuccessMsg(`¡Sala "${result.room.name}" creada exitosamente!`);
-      setTimeout(() => setSuccessMsg(""), 4000);
-    } catch (err) {
-      setErrorMsg(err instanceof Error ? err.message : "Error al crear sala");
-      setTimeout(() => setErrorMsg(""), 5000);
-    } finally {
-      setCreating(false);
-    }
-  };
+<file path="tsconfig.node.json">
+{
+  "compilerOptions": {
+    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
+    "target": "es2023",
+    "lib": ["ES2023"],
+    "module": "esnext",
+    "types": ["node"],
+    "skipLibCheck": true,
 
-  const copyRoomId = (roomId: string) => {
-    navigator.clipboard.writeText(roomId);
-    setCopiedId(roomId);
-    setTimeout(() => setCopiedId(null), 2000);
-  };
+    /* Bundler mode */
+    "moduleResolution": "bundler",
+    "allowImportingTsExtensions": true,
+    "verbatimModuleSyntax": true,
+    "moduleDetection": "force",
+    "noEmit": true,
 
-  const formatDate = (dateStr: string) => {
-    const date = new Date(dateStr);
-    return date.toLocaleDateString("es-CO", {
-      day: "numeric",
-      month: "short",
-      year: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
-    });
-  };
+    /* Linting */
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
+    "erasableSyntaxOnly": true,
+    "noFallthroughCasesInSwitch": true
+  },
+  "include": ["vite.config.ts"]
+}
+</file>
 
-  return (
-    <div className="dashboard-page">
-      <div className="auth-bg">
-        <div className="auth-blob auth-blob--1" />
-        <div className="auth-blob auth-blob--2" />
-      </div>
+<file path="vercel.json">
+{
+  "rewrites": [{ "source": "/(.*)", "destination": "/index.html" }]
+}
+</file>
 
-      {/* Navbar */}
-      <nav className="dashboard-nav">
-        <div className="dashboard-nav-inner">
-          <div className="dashboard-nav-left">
-            <div className="dashboard-nav-logo">
-              <LuVideo size={20} />
-            </div>
-            <span className="dashboard-nav-title">MeetClone</span>
-          </div>
+<file path="docs/ux/bitacora.md">
+# Bitácora de Sprinte — MeetClone Frontend
 
-          <div className="dashboard-nav-right">
-            {/* Profile Link */}
-            <button
-              onClick={() => navigate("/profile")}
-              className="dashboard-profile-chip"
-            >
-              {user?.photoURL ? (
-                <img
-                  src={user.photoURL}
-                  alt="Avatar"
-                  className="dashboard-profile-avatar"
-                />
-              ) : (
-                <div className="dashboard-profile-avatar-fallback">
-                  {user?.displayName ? (
-                    user.displayName.charAt(0).toUpperCase()
-                  ) : (
-                    <LuUser size={14} />
-                  )}
-                </div>
-              )}
-              <div className="dashboard-profile-info">
-                <span className="dashboard-profile-name">
-                  {user?.displayName || user?.username || "Usuario"}
-                </span>
-                <span className="dashboard-profile-tag">
-                  @{user?.username || "sin_usuario"}
-                </span>
-              </div>
-            </button>
+## Sprint 1 — Auth, Validaciones, UI/UX y Documentación
 
-            <button
-              onClick={logout}
-              className="dashboard-logout-btn"
-              title="Cerrar Sesión"
-            >
-              <LuLogOut size={16} />
-              <span>Salir</span>
-            </button>
-          </div>
-        </div>
-      </nav>
+### Resumen
+- **Duración:** 1 sprint
+- **Objetivo:** Implementar autenticación manual y con Google, validaciones de username, rutas protegidas, documentación Swagger, y mejoras UX/HCI.
+- **Rama:** `feature/swagger-docs`
 
-      {/* Main Content */}
-      <main className="dashboard-main">
-        <div className="dashboard-container">
-          {/* Header Section */}
-          <div className="dashboard-header">
-            <div className="dashboard-header-text">
-              <h1 className="dashboard-title">
-                <LuLayoutDashboard size={28} />
-                Mis Salas de Estudio
-              </h1>
-              <p className="dashboard-subtitle">
-                Crea y administra tus espacios de estudio colaborativo
-              </p>
-            </div>
-            <button
-              onClick={() => setShowCreateForm(true)}
-              className="dashboard-create-btn"
-            >
-              <LuPlus size={18} />
-              Crear Sala
-            </button>
-          </div>
+---
 
-          {/* Alerts */}
-          {successMsg && (
-            <div className="profile-alert profile-alert--success">
-              <LuCheck size={18} />
-              <span>{successMsg}</span>
-            </div>
-          )}
-          {errorMsg && (
-            <div className="profile-alert profile-alert--error">
-              <LuCircleAlert size={18} />
-              <span>{errorMsg}</span>
-            </div>
-          )}
+### C1 — US-01/02/03 Auth manual y Google
 
-          {roomDeleted &&
-            (isAdmin ? (
-              <div className="room-status-page">
-                <div className="auth-bg">
-                  <div className="auth-blob auth-blob--1" />
-                  <div className="auth-blob auth-blob--2" />
-                </div>
-                <div className="room-status-card">
-                  <LuLoaderCircle className="room-spinner" size={48} />
-                  <h2>Sala eliminada</h2>
-                  <p>
-                    Haz eliminado la sala, todas las personas que se encontraban
-                    en ella han sido desconectadas inmediatamente
-                  </p>
-                </div>
-              </div>
-            ) : (
-              <div className="room-status-page">
-                <div className="auth-bg">
-                  <div className="auth-blob auth-blob--1" />
-                  <div className="auth-blob auth-blob--2" />
-                </div>
-                <div className="room-status-card">
-                  <LuLoaderCircle className="room-spinner" size={48} />
-                  <h2>Sala eliminada</h2>
-                  <p>
-                    Sala eliminada por el administrador, por favor contacte a la
-                    persona responsable de la sala
-                  </p>
-                </div>
-              </div>
-            ))}
+**Estado: ✅ Completado**
 
-          {/* Create Room Form */}
-          {showCreateForm && (
-            <div className="dashboard-create-card">
-              <div className="dashboard-create-header">
-                <LuSparkles size={20} className="dashboard-create-icon" />
-                <h3>Crear Nueva Sala</h3>
-              </div>
-              <form
-                onSubmit={handleCreateRoom}
-                className="dashboard-create-form"
-              >
-                <div className="dashboard-create-input-wrap">
-                  <input
-                    type="text"
-                    value={roomName}
-                    onChange={(e) => setRoomName(e.target.value)}
-                    placeholder="Nombre de la sala (ej: Estudio de Cálculo)"
-                    className="dashboard-create-input"
-                    maxLength={50}
-                    disabled={creating}
-                    autoFocus
-                  />
-                  <span className="dashboard-create-counter">
-                    {roomName.length}/50
-                  </span>
-                </div>
-                <div className="dashboard-create-actions">
-                  <button
-                    type="submit"
-                    disabled={creating || !roomName.trim()}
-                    className="profile-btn profile-btn--save"
-                  >
-                    {creating ? (
-                      <LuLoaderCircle
-                        className="profile-btn-spinner"
-                        size={16}
-                      />
-                    ) : (
-                      <LuPlus size={16} />
-                    )}
-                    {creating ? "Creando..." : "Crear Sala"}
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setShowCreateForm(false);
-                      setRoomName("");
-                    }}
-                    disabled={creating}
-                    className="profile-btn profile-btn--cancel"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </form>
-            </div>
-          )}
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Registro manual con email, contraseña, nombre y apellido | ✅ | Endpoint POST `/register` |
+| Login con username o email + contraseña | ✅ | Endpoint POST `/login` |
+| Login con Google (popup OAuth) | ✅ | Firebase Auth + POST `/google-login` |
+| Persistencia de sesión en localStorage | ✅ | Clave `meet_clone_user` |
+| Flujo completo: registro → login → dashboard | ✅ | Sin pérdida de datos |
 
-          {/* Rooms List or Empty State */}
-          {loading ? (
-            <div className="dashboard-loading">
-              <LuLoaderCircle className="profile-spinner" size={40} />
-              <p>Cargando tus salas...</p>
-            </div>
-          ) : rooms.length === 0 ? (
-            <div className="dashboard-empty">
-              <div className="dashboard-empty-icon">
-                <LuDoorOpen size={64} />
-              </div>
-              <h2 className="dashboard-empty-title">No tienes salas aún</h2>
-              <p className="dashboard-empty-desc">
-                ¡Crea tu primera sala de estudio y comienza a colaborar con
-                otros estudiantes!
-              </p>
-              <button
-                onClick={() => setShowCreateForm(true)}
-                className="dashboard-create-btn dashboard-create-btn--large"
-              >
-                <LuPlus size={20} />
-                Crear mi primera sala
-              </button>
-            </div>
-          ) : (
-            <div className="dashboard-rooms-grid">
-              {rooms.map((room) => (
-                <div key={room.id} className="dashboard-room-card">
-                  <div className="dashboard-room-header">
-                    <div className="dashboard-room-icon">
-                      <LuVideo size={20} />
-                    </div>
-                    <div className="dashboard-room-meta">
-                      <h3 className="dashboard-room-name">{room.name}</h3>
-                      <span className="dashboard-room-role">Administrador</span>
-                    </div>
-                  </div>
-                  <div className="dashboard-room-details">
-                    <div className="dashboard-room-detail">
-                      <LuHash size={14} />
-                      <span className="dashboard-room-id">{room.roomId}</span>
-                      <button
-                        onClick={() => copyRoomId(room.roomId)}
-                        className="dashboard-copy-btn"
-                        title="Copiar ID"
-                      >
-                        {copiedId === room.roomId ? (
-                          <LuCheck size={14} />
-                        ) : (
-                          <LuCopy size={14} />
-                        )}
-                      </button>
-                    </div>
-                    <div className="dashboard-room-detail">
-                      <LuClock size={14} />
-                      <span>{formatDate(room.createdAt)}</span>
-                    </div>
-                  </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => navigate(`/room/${room.roomId}`)}
-                      className="dashboard-room-enter"
-                    >
-                      <LuDoorOpen size={16} />
-                      Entrar a la sala
-                    </button>
-                    <button
-                      onClick={() => {
-                        setDeleteRoom(true);
-                        setRoomToDelete(room.roomId);
-                      }}
-                      className="dashboard-logout-btn"
-                    >
-                      <MdDelete size={40} />
-                      Eliminar Sala
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+**Decisiones UX:**
+- Descartado el uso de `sessionStorage` para pasar nombre entre registro y login — inconsistente con la fuente oficial (Firestore)
+- Implementada consulta directa a Firestore desde el frontend para obtener `name` + `surname` tras el login
 
-          {deleteRoom && (
-            <div className="profile-modal-overlay" onClick={() => {}}>
-              <div
-                className="profile-modal"
-                onClick={(e) => e.stopPropagation()}
-              >
-                <div className="profile-modal-icon">
-                  <LuShieldAlert size={48} />
-                </div>
-                <h3 className="profile-modal-title">⚠️ Eliminar Sala</h3>
-                <p className="profile-modal-desc">
-                  Si eliminas esta sala todas las <strong>PERSONAS</strong> que
-                  se encuentren en ella se desconectaran inmediatamente
-                </p>
+---
 
-                <div className="profile-modal-actions">
-                  <button
-                    onClick={() => {
-                      socketDeleteRoom();
-                    }}
-                    className="profile-btn profile-btn--confirm-delete"
-                  >
-                    {deleting ? (
-                      <LuLoaderCircle
-                        className="profile-btn-spinner"
-                        size={16}
-                      />
-                    ) : (
-                      <LuTrash2 size={16} />
-                    )}
-                    {deleting ? "Eliminando..." : "Eliminar Sala"}
-                  </button>
-                  <button
-                    onClick={() => {
-                      setDeleteRoom(false);
-                      setRoomToDelete(null);
-                    }}
-                    disabled={deleting}
-                    className="profile-btn profile-btn--cancel-modal"
-                  >
-                    Cancelar
-                  </button>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-      </main>
+### C2 — TS-01: Validaciones Username
 
-      {/* Footer */}
-      <footer className="dashboard-footer">
-        &copy; 2026 MeetClone. Todos los derechos reservados.
-      </footer>
-    </div>
-  );
-};
+**Estado: ✅ Completado**
 
-export default Dashboard;
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Validación de longitud mínima (3 caracteres) | ✅ | Feedback en tiempo real |
+| Validación de caracteres permitidos (solo alfanumérico + `_`) | ✅ | Regex `^[a-zA-Z0-9_]+$` |
+| Auto-formateo: minúsculas y sin espacios | ✅ | `onChange` transforma el input |
+| Bloqueo de usernames duplicados (error del backend) | ✅ | Se muestra error en el campo |
+| Exigencia de username para usuarios de Google | ✅ | Pantalla intermedia `/choose-username` |
+
+**Decisiones UX:**
+- Validación en blur + en tiempo real si el campo ya fue tocado — balance entre feedback inmediato y no molestar antes de interactuar
+- Error de servidor mapeado al campo específico, no solo mensaje general
+
+---
+
+### C3 — Rutas protegidas y Estados UI
+
+**Estado: ✅ Completado**
+
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| `ProtectedRoute` redirige a `/` si no hay sesión | ✅ | `Navigate` de react-router |
+| `PublicRoute` redirige a `/home` si ya hay sesión | ✅ | Evita ver login estando autenticado |
+| `UsernameRequiredRoute` para Google pendiente | ✅ | Redirige a `/choose-username` |
+| Loading screen con spinner | ✅ | `LoadingScreen` con animación |
+| Alertas de error y éxito animadas | ✅ | Slide-in con colores distintivos |
+| Estados disabled en formularios durante carga | ✅ | Previene doble envío |
+
+**Decisiones UX:**
+- Loading screen con blur background y spinner evita parpadeo al verificar auth
+- Alertas animadas con color coding (rojo = error, verde = éxito, ámbar = advertencia)
+
+---
+
+### C4 — API / DB Docs (Swagger)
+
+**Estado: ✅ Completado**
+
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Instalación de `swagger-ui-react` | ✅ | v5.32.6 |
+| Spec OpenAPI 3.0 para User endpoints | ✅ | 5 endpoints documentados |
+| Página `/docs` con Swagger UI | ✅ | Ruta pública sin autenticación |
+| Schemas: RegisterData, LoginData, User, AuthResponse | ✅ | Tipos completos |
+
+**Archivos:**
+- `src/docs/user-api.json`
+- `src/pages/SwaggerDocs.tsx`
+- `src/types/swagger-ui-react.d.ts`
+
+---
+
+### C5 — Evidencia UX/HCI + Bitácora
+
+**Estado: ✅ Completado**
+
+**Decisiones UX documentadas:**
+
+| # | Decisión | Base HCI |
+|---|----------|----------|
+| 1 | Card de login más ancha (960px), sin scroll, padding 56px | Ley de Fitts, Carga cognitiva, Proximidad |
+| 2 | Nombre completo desde Firestore en lugar de sessionStorage | Reconocimiento, Consistencia, Feedback |
+
+**Archivos:**
+- `docs/ux/evidencia-ux.md` — Documento de evidencia con principios HCI aplicados y capturas
+- `docs/ux/bitacora.md` — Este archivo
+
+---
+
+---
+
+## Sprint 2 — Perfil de Usuario, Eliminación de Cuenta y Gestión de Salas
+
+### Resumen
+- **Duración:** 1 sprint
+- **Objetivo:** Implementar vista/edición de perfil (US-04), eliminación de cuenta con confirmación (US-05), y creación/visualización de salas propias (US-06). Enfoque en contraste visual, microcopy, y principios HCI.
+- **Rama:** `feature/swagger-docs` (continuación)
+
+---
+
+### C6 — US-04: Ver y Editar Perfil de Usuario
+
+**Estado: ✅ Completado**
+
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Vista de perfil con datos desde `GET /profile/:uid` | ✅ | Avatar, nombre, apellido, username, email, provider badge |
+| Modo edición inline con inputs editables | ✅ | Placeholders: "Tu nombre", "Tu apellido", "Tu username", "Tu correo" |
+| Guardar cambios via `PUT /profile/:uid` | ✅ | Botón "Guardar Cambios" con estado "Guardando..." |
+| Cancelar edición restaura valores originales del servidor | ✅ | Sin confirmación intermedia (bajo riesgo) |
+| Alertas de éxito/error animadas con auto-dismiss | ✅ | Verde éxito (4s), rojo error (5s) |
+| Diferenciación visual modo lectura vs. edición | ✅ | Read: `.profile-field-value` con bg sutil; Edit: `.profile-field-input` con foco indigo |
+| Loading state con spinner | ✅ | `"Cargando perfil..."` + `LuLoaderCircle` |
+
+**Decisiones UX:**
+- Modo edición inline sin cambiar de ruta — reduce fricción y mantiene contexto
+- Placeholders posesivos («Tu nombre») — refuerzan pertenencia y guían entrada
+- Botón "Cancelar" restaura desde el servidor, no desde estado local — evita datos obsoletos
+- Provider badge (🔗 Google / 📧 Email) — visibilidad del método de autenticación
+
+---
+
+### C7 — US-05: Eliminar Cuenta de Usuario
+
+**Estado: ✅ Completado**
+
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Modal de confirmación con overlay blur | ✅ | `profile-modal-overlay` con `backdrop-filter: blur(8px)` |
+| Descripción del riesgo (irreversibilidad) | ✅ | Texto explícito: "permanente e irreversible" + "No podrás recuperar tu información" |
+| Confirmación por escritura "ELIMINAR" | ✅ | Input con placeholder "ELIMINAR", botón disabled hasta coincidir |
+| Botón destructivo con estilo rojo | ✅ | Gradient `#dc2626` → `#b91c1c` con glow rojo |
+| Eliminación en backend (`DELETE /profile/:uid`) + Firebase Auth | ✅ | Doble eliminación con fallback |
+| Loading state durante eliminación | ✅ | "Eliminando..." + spinner |
+| Redirección al home post-eliminación | ✅ | `navigate("/", { replace: true })` |
+| Icono pulsante de advertencia | ✅ | `LuShieldAlert` con animación pulse |
+
+**Decisiones UX:**
+- Modal con overlay blur aísla visualmente la acción del resto de la UI
+- Confirmación por escritura — requiere acción deliberada, previene clics accidentales
+- Botón "Sí, Eliminar mi Cuenta" en primera persona («mi Cuenta») — refuerza compromiso
+- Descripción triplemente enfática (permanente, irreversible, no recuperarás) — asegura comprensión del riesgo
+- Sin opción de "recordar elección" — cada eliminación debe ser explícita
+
+---
+
+### C8 — US-06: Crear y Visualizar Salas Propias
+
+**Estado: ✅ Completado**
+
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Listado de salas desde `GET /rooms/:uid` | ✅ | Grid responsive `repeat(auto-fill, minmax(320px,1fr))` |
+| Formulario inline para crear sala | ✅ | Input con counter `{n}/50`, validación de campo requerido |
+| Creación via `POST /rooms` | ✅ | Botón "Crear Sala" / "Creando..." |
+| Empty state motivacional | ✅ | `LuDoorOpen` icon, título "No tienes salas aún", botón "Crear mi primera sala" |
+| Tarjeta de sala con nombre, ID, fecha y botón entrar | ✅ | Badge "Administrador", ID copiable, fecha en formato `es-CO` |
+| Copiar ID de sala al portapapeles | ✅ | Feedback visual con `LuCheck` (2s) |
+| Alerta de éxito con nombre de sala | ✅ | `¡Sala "${room.name}" creada exitosamente!` |
+| Loading state con spinner | ✅ | `"Cargando tus salas..."` |
+| Character counter en tiempo real | ✅ | `{roomName.length}/50` |
+
+**Decisiones UX:**
+- Creación inline en el dashboard — evita navegar a otra página para crear
+- Placeholder con ejemplo contextual («ej: Estudio de Cálculo») — alinea con el dominio universitario
+- Empty state usa tono positivo («No tienes salas **aún**») + CTA grande — motivación sobre advertencia
+- Badge "Administrador" en cada tarjeta — identidad de rol clara
+- ID de sala en monospace con botón copiar — facilita compartir
+- Fecha formateada con `toLocaleDateString("es-CO")` — localización colombiana
+
+---
+
+### Problemas conocidos / Pendientes
+
+- El endpoint `/login` del backend no devuelve `displayName` para usuarios registrados manualmente — se consulta Firestore como workaround
+- El botón "¿Olvidaste tu contraseña?" en Login no tiene funcionalidad — placeholder
+- No hay endpoint para actualizar perfil de usuario (post-registro) — resuelto en C6
+- La sala interactiva (US-07) con video/chat en tiempo real está en desarrollo
+
+---
+
+### Tiempo estimado vs real
+
+| Actividad | Estimado | Real |
+|-----------|----------|------|
+| Auth manual + Google (C1) | 4h | — |
+| Validaciones username (C2) | 2h | — |
+| Rutas protegidas (C3) | 1.5h | — |
+| Swagger docs (C4) | 2h | — |
+| UX/HCI mejoras + bitácora (C5) | 2h | — |
+| Perfil de usuario (C6) | 3h | — |
+| Eliminar cuenta (C7) | 2h | — |
+| Crear y listar salas (C8) | 3h | — |
+| **Total** | **19.5h** | — |
+</file>
+
+<file path="docs/ux/evidencia-ux.md">
+# Evidencia UX/HCI — Sprint 1
+
+## Decisión 1: Card de Login más grande, ancha y sin scroll
+
+**Problema:** La pantalla de login era angosta (max-width 430px), obligaba a hacer scroll en viewports medianos, y los elementos se sentían apretados contra los bordes.
+
+**Solución implementada:**
+- Card ampliada a 960px de ancho máximo con padding interno de 56px
+- Altura fija del viewport con `height: 100dvh; overflow: hidden` en el contenedor
+- Centrado vertical absoluto sin estiramiento forzado
+- Inputs de 54px de altura, botones de 56px, border-radius de 40px
+
+**Principios HCI aplicados:**
+| Principio | Aplicación |
+|-----------|-----------|
+| **Ley de Fitts** | Targets más grandes (inputs 54px, botones 56px) reducen el tiempo de interacción |
+| **Proximidad** | Padding de 56px agrupa visualmente secciones sin saturar |
+| **Carga cognitiva** | Sin scroll: toda la información visible de un vistazo |
+| **Consistencia** | Mismo patrón visual en Login y Register |
+
+**Captura:** (insertar screenshot de la card de login en viewport 1920×1080 mostrando la card centrada sin scroll)
+
+---
+
+## Decisión 2: Nombre completo del usuario desde Firestore
+
+**Problema:** Al registrarse con email/contraseña, el dashboard mostraba "Usuario" y "sin_usuario" porque el backend no devolvía `displayName` ni `username` en la respuesta de login.
+
+**Solución incorrecta (descartada):** Guardar `name`+`surname` en `sessionStorage` durante el registro y leerlo al hacer login.
+
+**Solución final:** Consultar Firestore directamente desde el frontend con el `uid` del usuario para obtener los campos `name` y `surname`, construyendo el `displayName` como «Jhoan Munoz».
+
+**Principios HCI aplicados:**
+| Principio | Aplicación |
+|-----------|-----------|
+| **Reconocimiento sobre recuerdo** | El usuario ve su identidad real sin tener que recordar qué nombre usó |
+| **Feedback** | El dashboard muestra inmediatamente el nombre completo tras el login |
+| **Consistencia** | Misma fuente de datos (Firestore) para usuarios manuales y de Google |
+| **Visibilidad del estado del sistema** | El nombre aparece en el navbar como confirmación de identidad |
+
+**Captura:** (insertar screenshot del navbar mostrando "Jhoan Munoz" y "@jhoan_munoz" después de login manual)
+
+---
+
+## Decisión 3: Contraste y microcopy en Perfil (US-04), Eliminación de Cuenta (US-05) y Salas (US-06)
+
+**Problema:** Las páginas de perfil, eliminación de cuenta y dashboard de salas requerían decisiones de contraste visual y microcopy que mantuvieran la coherencia con el sistema de diseño oscuro existente y guiaran al usuario sin ambigüedad.
+
+**Contexto — US-04 (Ver y Editar Perfil):**
+- Los campos de solo lectura vs. editables debían diferenciarse visualmente sin romper la consistencia.
+- El feedback de acción (guardar/cancelar) debía ser inmediato y claro.
+
+**Contexto — US-05 (Eliminar Cuenta):**
+- Acción irreversible: el microcopy debía comunicar claramente las consecuencias.
+- Confirmación por escritura explícita («ELIMINAR») para prevenir errores fatales.
+- Contraste visual agresivo (rojo) para señalizar peligro.
+
+**Contexto — US-06 (Crear y Visualizar Salas Propias):**
+- El placeholder del input de creación debía sugerir un caso de uso real.
+- Las salas vacías debían tener un estado vacío motivacional, no un mensaje genérico.
+- La tarjeta de sala debía presentar la información jerarquizada (nombre, ID, fecha, entrar).
+
+**Soluciones implementadas:**
+
+### Contraste (Sistema de color consistente)
+
+| Elemento | Color/Fondo | Ratio de contraste aproximado |
+|----------|-------------|-------------------------------|
+| Fondo página | `#05051a` | — |
+| Texto primario | `rgba(255,255,255,0.9)` | ~14:1 sobre fondo |
+| Texto secundario (labels, metadatos) | `rgba(255,255,255,0.5)` | ~7:1 |
+| Texto terciario (placeholders) | `rgba(255,255,255,0.28)` | ~4:1 (mínimo para decorativo) |
+| Acento (links, badges) | `#a5b4fc` | ~9:1 |
+| Éxito (alertas, botón guardar) | `#059669` → `#10b981` gradient | ~5.5:1 |
+| Error/peligro (alertas, eliminar) | `#dc2626` → `#b91c1c` gradient | ~4.5:1 |
+| Card glassmorphism | `rgba(15,12,32,0.55)` + `backdrop-filter: blur(32px)` | Mantiene legibilidad del texto |
+| Input focus | Indigo glow `rgba(99,102,241,0.6)` | Señalización multimodal |
+| Input error (US-05 modal) | Borde rojo `rgba(239,68,68,0.2)` + glow `rgba(239,68,68,0.3)` | Contraste cromático alto |
+
+### Microcopy (Español — es-CO)
+
+| Contexto | Texto | Principio HCI |
+|----------|-------|---------------|
+| Placeholder nombre | `"Tu nombre"` | **Naturalidad**: tono posesivo dueño del dato |
+| Placeholder apellido | `"Tu apellido"` | **Consistencia**: mismo patrón que nombre |
+| Placeholder username | `"Tu username"` | **Consistencia**: mismo patrón |
+| Placeholder email | `"Tu correo"` | **Consistencia**: coloquial pero preciso |
+| Placeholder crear sala | `"Nombre de la sala (ej: Estudio de Cálculo)"` | **Ejemplo contextual**: sugiere un caso de estudio real universitario |
+| Botón editar | `"Editar Perfil"` | **Reconocimiento**: verbo + objeto directo |
+| Botón guardar | `"Guardar Cambios"` / `"Guardando..."` | **Feedback**: estado loading con gerundio |
+| Botón cancelar (edición) | `"Cancelar"` | **Consistencia**: mismo término en toda la app |
+| Botón eliminar cuenta | `"Eliminar Cuenta"` | **Claridad**: sin eufemismos |
+| Éxito al guardar | `"¡Perfil actualizado exitosamente!"` | **Feedback positivo**: exclamación + adverbio |
+| Error al guardar | `"Error al actualizar perfil"` / mensaje del servidor | **Feedback informativo**: causa del error |
+| Título modal eliminar | `"⚠️ Eliminar Cuenta"` | **Señal de peligro**: icono + texto |
+| Descripción modal | `"Esta acción es permanente e irreversible. Se eliminarán todos tus datos de Firestore y tu cuenta de Firebase Auth. No podrás recuperar tu información."` | **Comunicación de riesgo**: triple énfasis (permanente, irreversible, no recuperarás) |
+| Confirmación | `"Escribe ELIMINAR para confirmar:"` / placeholder `"ELIMINAR"` | **Forense**: requiere escritura activa, no solo clic |
+| Botón confirmar delete | `"Sí, Eliminar mi Cuenta"` / `"Eliminando..."` | **Compromiso**: primera persona posesiva («mi Cuenta») |
+| Botón cancelar (modal) | `"Cancelar"` | **Consistencia**: misma etiqueta que en otros contextos |
+| Título dashboard | `"Mis Salas de Estudio"` | **Pertenencia**: posesivo «Mis» + propósito «de Estudio» |
+| Subtítulo dashboard | `"Crea y administra tus espacios de estudio colaborativo"` | **Propósito**: explica el valor del producto |
+| Estado vacío título | `"No tienes salas aún"` | **Neutral positivo**: sin culpa, «aún» implica posibilidad |
+| Estado vacío descripción | `"¡Crea tu primera sala de estudio y comienza a colaborar con otros estudiantes!"` | **Llamado a la acción**: tono entusiasta, especifica el beneficio social |
+| Botón empty state | `"Crear mi primera sala"` | **Personalizado**: «mi primera» → owned action |
+| Crear sala exitoso | `` `¡Sala "${room.name}" creada exitosamente!` `` | **Feedback nominal**: incluye el nombre de la sala creada |
+| Badge rol sala | `"Administrador"` | **Identidad de rol**: indica propiedad |
+| Botón entrar sala | `"Entrar a la sala"` | **Acción clara**: verbo de movimiento |
+| Label contador crear sala | `"{n}/50"` | **Restricción visible**: indica límite de caracteres en tiempo real |
+| Loading perfil | `"Cargando perfil..."` | **Feedback**: estado de carga descriptivo |
+| Loading salas | `"Cargando tus salas..."` | **Feedback**: estado de carga con posesivo |
+| Error al crear sala | `"El nombre de la sala es requerido"` | **Prevención de error**: validación inmediata |
+
+### Principios HCI aplicados
+
+| Principio | Aplicación en US-04 | Aplicación en US-05 | Aplicación en US-06 |
+|-----------|---------------------|---------------------|---------------------|
+| **Prevención de errores** | Cancel edit descarta cambios sin confirmación | Modal + escritura «ELIMINAR» evita eliminación accidental | Validación `!roomName.trim()` antes de enviar |
+| **Visibilidad del estado del sistema** | Labels muestran modo edición/lectura, alertas de éxito/error | Pulsing icon (`LuShieldAlert`), botón disabled hasta escribir «ELIMINAR» | Counter `{n}/50`, loading spinner + texto, alertas |
+| **Consistencia y estándares** | Mismos patrones glassmorphism, inputs, botones que Login/Register | Botón delete usa rojo consistente con logout y otros destructivos | Mismo sistema de alertas que Profile (`.profile-alert`) |
+| **Control y libertad del usuario** | Cancelar edición restaura valores originales | Cancelar modal cierra sin eliminar | Cancelar creación descarta formulario |
+| **Reconocimiento sobre recuerdo** | Placeholders recuerdan qué escribir en cada campo | «ELIMINAR» visible en placeholder — el usuario no necesita memorizar | Empty state motiva acción sin tener que recordar dónde crear |
+| **Flexibilidad y eficiencia** | Edición inline sin navegar a otra página | — | Crear sala desde el mismo dashboard sin cambiar de ruta |
+| **Diseño estético y minimalista** | Glassmorphism, espaciado generoso (padding 36-40px), jerarquía visual clara | Modal centrado, icono pulsante, sin ruido visual | Grid responsive, tarjetas con info jerárquica, hover states sutiles |
+| **Ayuda a los usuarios** | Alertas con color coding (verde=éxito, rojo=error) | Descripción explícita de irreversibilidad | Placeholder con ejemplo concreto de uso |
+
+**Capturas:** (insertar screenshots de perfil en edición, modal de eliminar con texto escrito, dashboard con salas listadas y empty state)
+
+---
+
+## Resumen de cambios UX del Sprint
+
+| Sprint | Cambio | Impacto UX |
+|--------|--------|------------|
+| C1 | Auth manual + Google con Firestore | Flujo completo sin pérdida de sesión |
+| C2 | Validación de unicidad de username | Feedback inmediato, evita conflictos |
+| C3 | Rutas protegidas y estados de carga/error | Dashboard inaccesible sin login, mensajes claros |
+| C4 | Documentación Swagger de User API | Visibilidad del contrato API para desarrollo |
+| C5 | Card login más grande y nombre desde Firestore | Menos fricción, identidad visible |
+| **C6** | **Perfil de usuario (US-04) — ver, editar, guardar** | **Control de identidad, feedback inmediato, modo edición/lectura claro** |
+| **C7** | **Eliminar cuenta (US-05) — modal con confirmación escrita** | **Prevención de error fatal, microcopy de riesgo, contraste rojo señalizador** |
+| **C8** | **Crear y listar salas (US-06) — dashboard + empty state** | **Gestión visual de espacios, jerarquía de información, microcopy motivacional** |
 </file>
 
 <file path="src/pages/Profile.tsx">
@@ -1163,7 +1378,7 @@ import {
 } from "react-icons/lu";
 
 const Profile: React.FC = () => {
-  const { user, updateUser, deleteAccount, logout } = useAuth();
+  const { user, updateUser, deleteAccount} = useAuth();
   const navigate = useNavigate();
 
   const [profile, setProfile] = useState<UserProfile | null>(null);
@@ -1562,1315 +1777,17 @@ const Profile: React.FC = () => {
 export default Profile;
 </file>
 
-<file path="src/pages/Room.tsx">
-import React, { useEffect, useState, useRef } from "react";
-import { useParams, useNavigate } from "react-router-dom";
-import { useAuth } from "../contexts/AuthContext";
-import {
-  connectSocket,
-  disconnectSocket,
-  getSocket,
-  type Socket,
-} from "../services/socket";
-import {
-  LuUsers,
-  LuMessageSquare,
-  LuSend,
-  LuLogOut,
-  LuLoaderCircle,
-  LuVideo,
-  LuVideoOff,
-  LuMic,
-  LuMicOff,
-  LuCopy,
-  LuCheck,
-  LuUser,
-  LuSparkles,
-} from "react-icons/lu";
-
-interface ChatMessage {
-  id: string;
-  senderUid: string;
-  senderUsername: string;
-  text: string;
-  createdAt: string | Date;
-}
-
-interface ActiveUser {
-  username: string;
-  uid: string;
-}
-
-const Room: React.FC = () => {
-  const { roomId } = useParams<{ roomId: string }>();
-  const { user } = useAuth();
-  const navigate = useNavigate();
-
-  const [loading, setLoading] = useState(true);
-  const [isValidating, setIsValidating] = useState(true);
-  const [errorMsg, setErrorMsg] = useState("");
-  const [roomName, setRoomName] = useState("");
-  const [hostUid, setHostUid] = useState("");
-
-  // Real-time states
-  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
-  const [messages, setMessages] = useState<ChatMessage[]>([]);
-  const [newMessage, setNewMessage] = useState("");
-
-  // UI Controls (Simulated Video/Audio states for premium feel)
-  const [isVideoOn, setIsVideoOn] = useState(false);
-  const [isMicOn, setIsMicOn] = useState(false);
-  const [copied, setCopied] = useState(false);
-
-  const socketRef = useRef<Socket | null>(null);
-  const chatEndRef = useRef<HTMLDivElement | null>(null);
-
-  // Auto scroll chat to bottom
-  useEffect(() => {
-    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [messages]);
-
-  useEffect(() => {
-    if (!roomId || !user) {
-      navigate("/dashboard");
-      return;
-    }
-
-    // Connect to WebSocket server via centralized singleton
-    const socket = connectSocket();
-    socketRef.current = socket;
-
-    // Join room event
-    socket.emit("join-room", {
-      roomId,
-      username: user.username || user.displayName || "Estudiante",
-      uid: user.uid,
-    });
-
-    socket.on("delete-room", (data: { roomId: string; message: string }) => {
-      const { roomId, message } = data;
-
-      alert(message);
-    });
-
-    // 1. Connection successful
-    socket.on(
-      "room-joined-success",
-      (data: {
-        roomId: string;
-        roomName: string;
-        hostUid: string;
-        activeUsers: ActiveUser[];
-      }) => {
-        setRoomName(data.roomName);
-        setHostUid(data.hostUid);
-        setActiveUsers(data.activeUsers);
-        setIsValidating(false);
-        setLoading(false);
-      },
-    );
-
-    // 2. Room is invalid
-    socket.on("room-invalid", (msg: string) => {
-      setErrorMsg(msg);
-      setIsValidating(false);
-      setLoading(false);
-    });
-
-    // 3. General error
-    socket.on("error-msg", (msg: string) => {
-      setErrorMsg(msg);
-    });
-
-    // 4. Receives whole room history of messages
-    socket.on("room-history", (history: ChatMessage[]) => {
-      setMessages(history);
-    });
-
-    // 5. Another user joins
-    socket.on(
-      "user-joined",
-      (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
-        setActiveUsers(data.activeUsers);
-        // Append a system message
-        const systemMsg: ChatMessage = {
-          id: `sys-${Date.now()}`,
-          senderUid: "system",
-          senderUsername: "MeetClone",
-          text: `@${data.username} se ha unido a la sala de estudio`,
-          createdAt: new Date(),
-        };
-        setMessages((prev) => [...prev, systemMsg]);
-      },
-    );
-
-    // 6. User leaves
-    socket.on(
-      "user-left",
-      (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
-        setActiveUsers(data.activeUsers);
-        // Append a system message
-        const systemMsg: ChatMessage = {
-          id: `sys-${Date.now()}`,
-          senderUid: "system",
-          senderUsername: "MeetClone",
-          text: `@${data.username} ha salido de la sala`,
-          createdAt: new Date(),
-        };
-        setMessages((prev) => [...prev, systemMsg]);
-      },
-    );
-
-    // 7. Receives new text message
-    socket.on("receive-message", (msg: ChatMessage) => {
-      setMessages((prev) => [...prev, msg]);
-    });
-
-    // Cleanup on unmount
-    return () => {
-      socket.off("room-joined-success");
-      socket.off("room-invalid");
-      socket.off("error-msg");
-      socket.off("room-history");
-      socket.off("user-joined");
-      socket.off("user-left");
-      socket.off("receive-message");
-      disconnectSocket();
-    };
-  }, [roomId, user, navigate]);
-
-  const handleSendMessage = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!newMessage.trim() || !socketRef.current || !roomId || !user) return;
-
-    socketRef.current.emit("send-message", {
-      roomId,
-      senderUid: user.uid,
-      senderUsername: user.username || user.displayName || "Estudiante",
-      text: newMessage.trim(),
-    });
-
-    setNewMessage("");
-  };
-
-  const copyRoomId = () => {
-    if (!roomId) return;
-    navigator.clipboard.writeText(roomId);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleLeave = () => {
-    navigate("/dashboard");
-  };
-
-  if (loading || isValidating) {
-    return (
-      <div className="room-status-page">
-        <div className="auth-bg">
-          <div className="auth-blob auth-blob--1" />
-          <div className="auth-blob auth-blob--2" />
-        </div>
-        <div className="room-status-card">
-          <LuLoaderCircle className="room-spinner" size={48} />
-          <h2>Validando Sala de Estudio...</h2>
-          <p>Conectándose al servidor de tiempo real...</p>
-        </div>
-      </div>
-    );
-  }
-
-  if (errorMsg) {
-    return (
-      <div className="room-status-page">
-        <div className="auth-bg">
-          <div className="auth-blob auth-blob--1" />
-          <div className="auth-blob auth-blob--2" />
-        </div>
-        <div className="room-status-card room-status-card--error">
-          <LuVideoOff size={48} className="room-error-icon" />
-          <h2>Acceso Denegado</h2>
-          <p>{errorMsg}</p>
-          <button
-            onClick={() => navigate("/dashboard")}
-            className="room-error-btn"
-          >
-            Volver al Dashboard
-          </button>
-        </div>
-      </div>
-    );
-  }
-
-  return (
-    <div className="room-page">
-      <div className="auth-bg">
-        <div className="auth-blob auth-blob--1" />
-        <div className="auth-blob auth-blob--2" />
-      </div>
-
-      {/* Room Header */}
-      <header className="room-header">
-        <div className="room-header-left">
-          <div className="room-logo">
-            <LuVideo size={20} />
-          </div>
-          <div className="room-title-wrap">
-            <h1 className="room-name-text">{roomName}</h1>
-            <div className="room-badge-row">
-              <span className="room-id-badge">ID: {roomId}</span>
-              <button
-                onClick={copyRoomId}
-                className="room-copy-btn"
-                title="Copiar ID de Sala"
-              >
-                {copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        <div className="room-header-right">
-          <button onClick={handleLeave} className="room-leave-btn">
-            <LuLogOut size={16} />
-            <span>Salir de la Sala</span>
-          </button>
-        </div>
-      </header>
-
-      {/* Main Grid */}
-      <div className="room-grid">
-        {/* Left Side: Video/Collaborative Stage */}
-        <div className="room-stage">
-          <div className="room-video-container">
-            {/* Main Participant (You or simulated speaker) */}
-            <div className="room-video-card">
-              {isVideoOn ? (
-                <div className="room-video-active-feed">
-                  {/* Simulated interactive active stream */}
-                  <div className="room-avatar-glowing">
-                    <LuSparkles size={40} className="glowing-sparkle" />
-                  </div>
-                  <span className="room-stream-placeholder">
-                    Cámara activa (Transmitiendo en tiempo real)
-                  </span>
-                </div>
-              ) : (
-                <div className="room-video-placeholder">
-                  {user?.photoURL ? (
-                    <img
-                      src={user.photoURL}
-                      alt="Tú"
-                      className="room-video-avatar"
-                    />
-                  ) : (
-                    <div className="room-video-avatar-fallback">
-                      {user?.displayName ? (
-                        user.displayName.charAt(0).toUpperCase()
-                      ) : (
-                        <LuUser size={40} />
-                      )}
-                    </div>
-                  )}
-                  <span className="room-video-name">
-                    @{user?.username || "tú"} (Tú)
-                  </span>
-                  <span className="room-status-sub">Cámara Apagada</span>
-                </div>
-              )}
-
-              {/* Status Pills */}
-              <div className="room-participant-labels">
-                <span className="participant-badge-name">Tú</span>
-                {!isMicOn && (
-                  <span className="participant-badge-muted">Silenciado</span>
-                )}
-              </div>
-            </div>
-          </div>
-
-          {/* Interactive Stage Controls */}
-          <div className="room-controls-bar">
-            <button
-              onClick={() => setIsMicOn(!isMicOn)}
-              className={`room-control-btn ${isMicOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
-              title={isMicOn ? "Silenciar Micrófono" : "Activar Micrófono"}
-            >
-              {isMicOn ? <LuMic size={20} /> : <LuMicOff size={20} />}
-              <span>{isMicOn ? "Mic Activo" : "Silenciado"}</span>
-            </button>
-
-            <button
-              onClick={() => setIsVideoOn(!isVideoOn)}
-              className={`room-control-btn ${isVideoOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
-              title={isVideoOn ? "Apagar Cámara" : "Encender Cámara"}
-            >
-              {isVideoOn ? <LuVideo size={20} /> : <LuVideoOff size={20} />}
-              <span>{isVideoOn ? "Cámara Activa" : "Cámara Off"}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Right Side: Sidebar containing Active Users List & Real-time Chat */}
-        <aside className="room-sidebar">
-          {/* Active Users Section */}
-          <div className="room-sidebar-section room-users-section">
-            <div className="section-header">
-              <LuUsers size={16} />
-              <h3>Participantes ({activeUsers.length})</h3>
-            </div>
-            <div className="users-list">
-              {activeUsers.map((u, i) => (
-                <div key={i} className="user-item">
-                  <div className="user-item-avatar-wrapper">
-                    <div className="user-item-avatar">
-                      {u.username.charAt(0).toUpperCase()}
-                    </div>
-                    <span className="online-indicator-dot" />
-                  </div>
-                  <div className="user-item-details">
-                    <span className="user-item-name">@{u.username}</span>
-                    {u.uid === hostUid && (
-                      <span className="user-item-badge">Anfitrión</span>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-
-          {/* Real-time Chat Section */}
-          <div className="room-sidebar-section room-chat-section">
-            <div className="section-header">
-              <LuMessageSquare size={16} />
-              <h3>Chat de Grupo</h3>
-            </div>
-
-            <div className="chat-messages-container">
-              {messages.length === 0 ? (
-                <div className="chat-empty-state">
-                  <LuMessageSquare size={32} />
-                  <p>No hay mensajes en este chat. ¡Comienza el debate!</p>
-                </div>
-              ) : (
-                messages.map((msg) => {
-                  const isSystem = msg.senderUid === "system";
-                  const isMe = msg.senderUid === user.uid;
-
-                  if (isSystem) {
-                    return (
-                      <div key={msg.id} className="chat-msg chat-msg--system">
-                        <span>{msg.text}</span>
-                      </div>
-                    );
-                  }
-
-                  return (
-                    <div
-                      key={msg.id}
-                      className={`chat-msg ${isMe ? "chat-msg--me" : "chat-msg--other"}`}
-                    >
-                      {!isMe && (
-                        <span className="chat-msg-username">
-                          @{msg.senderUsername}
-                        </span>
-                      )}
-                      <div className="chat-msg-bubble">
-                        <p>{msg.text}</p>
-                      </div>
-                    </div>
-                  );
-                })
-              )}
-              <div ref={chatEndRef} />
-            </div>
-
-            <form onSubmit={handleSendMessage} className="chat-input-form">
-              <input
-                type="text"
-                value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
-                placeholder="Escribe un mensaje..."
-                className="chat-input-field"
-                maxLength={400}
-              />
-              <button
-                type="submit"
-                disabled={!newMessage.trim()}
-                className="chat-submit-btn"
-              >
-                <LuSend size={16} />
-              </button>
-            </form>
-          </div>
-        </aside>
-      </div>
-    </div>
-  );
-};
-
-export default Room;
-</file>
-
-<file path="src/App.css">
-.counter {
-  font-size: 16px;
-  padding: 5px 10px;
-  border-radius: 5px;
-  color: var(--accent);
-  background: var(--accent-bg);
-  border: 2px solid transparent;
-  transition: border-color 0.3s;
-  margin-bottom: 24px;
-
-  &:hover {
-    border-color: var(--accent-border);
-  }
-  &:focus-visible {
-    outline: 2px solid var(--accent);
-    outline-offset: 2px;
-  }
-}
-
-.hero {
-  position: relative;
-
-  .base,
-  .framework,
-  .vite {
-    inset-inline: 0;
-    margin: 0 auto;
-  }
-
-  .base {
-    width: 170px;
-    position: relative;
-    z-index: 0;
-  }
-
-  .framework,
-  .vite {
-    position: absolute;
-  }
-
-  .framework {
-    z-index: 1;
-    top: 34px;
-    height: 28px;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(44deg) rotateY(39deg)
-      scale(1.4);
-  }
-
-  .vite {
-    z-index: 0;
-    top: 107px;
-    height: 26px;
-    width: auto;
-    transform: perspective(2000px) rotateZ(300deg) rotateX(40deg) rotateY(39deg)
-      scale(0.8);
-  }
-}
-
-#center {
-  display: flex;
-  flex-direction: column;
-  gap: 25px;
-  place-content: center;
-  place-items: center;
-  flex-grow: 1;
-
-  @media (max-width: 1024px) {
-    padding: 32px 20px 24px;
-    gap: 18px;
-  }
-}
-
-#next-steps {
-  display: flex;
-  border-top: 1px solid var(--border);
-  text-align: left;
-
-  & > div {
-    flex: 1 1 0;
-    padding: 32px;
-    @media (max-width: 1024px) {
-      padding: 24px 20px;
-    }
-  }
-
-  .icon {
-    margin-bottom: 16px;
-    width: 22px;
-    height: 22px;
-  }
-
-  @media (max-width: 1024px) {
-    flex-direction: column;
-    text-align: center;
-  }
-}
-
-#docs {
-  border-right: 1px solid var(--border);
-
-  @media (max-width: 1024px) {
-    border-right: none;
-    border-bottom: 1px solid var(--border);
-  }
-}
-
-#next-steps ul {
-  list-style: none;
-  padding: 0;
-  display: flex;
-  gap: 8px;
-  margin: 32px 0 0;
-
-  .logo {
-    height: 18px;
-  }
-
-  a {
-    color: var(--text-h);
-    font-size: 16px;
-    border-radius: 6px;
-    background: var(--social-bg);
-    display: flex;
-    padding: 6px 12px;
-    align-items: center;
-    gap: 8px;
-    text-decoration: none;
-    transition: box-shadow 0.3s;
-
-    &:hover {
-      box-shadow: var(--shadow);
-    }
-    .button-icon {
-      height: 18px;
-      width: 18px;
-    }
-  }
-
-  @media (max-width: 1024px) {
-    margin-top: 20px;
-    flex-wrap: wrap;
-    justify-content: center;
-
-    li {
-      flex: 1 1 calc(50% - 8px);
-    }
-
-    a {
-      width: 100%;
-      justify-content: center;
-      box-sizing: border-box;
-    }
-  }
-}
-
-#spacer {
-  height: 88px;
-  border-top: 1px solid var(--border);
-  @media (max-width: 1024px) {
-    height: 48px;
-  }
-}
-
-.ticks {
-  position: relative;
-  width: 100%;
-
-  &::before,
-  &::after {
-    content: '';
-    position: absolute;
-    top: -4.5px;
-    border: 5px solid transparent;
-  }
-
-  &::before {
-    left: 0;
-    border-left-color: var(--border);
-  }
-  &::after {
-    right: 0;
-    border-right-color: var(--border);
-  }
-}
-</file>
-
-<file path=".gitignore">
-# Logs
-logs
-*.log
-npm-debug.log*
-yarn-debug.log*
-yarn-error.log*
-pnpm-debug.log*
-lerna-debug.log*
-
-node_modules
-dist
-dist-ssr
-*.local
-
-# Editor directories and files
-.vscode/*
-!.vscode/extensions.json
-.idea
-.DS_Store
-*.suo
-*.ntvs*
-*.njsproj
-*.sln
-*.sw?
-</file>
-
-<file path="components.json">
-{
-  "$schema": "https://ui.shadcn.com/schema.json",
-  "style": "radix-nova",
-  "rsc": false,
-  "tsx": true,
-  "tailwind": {
-    "config": "",
-    "css": "src/index.css",
-    "baseColor": "neutral",
-    "cssVariables": true,
-    "prefix": ""
-  },
-  "iconLibrary": "lucide",
-  "rtl": false,
-  "aliases": {
-    "components": "@/components",
-    "utils": "@/lib/utils",
-    "ui": "@/components/ui",
-    "lib": "@/lib",
-    "hooks": "@/hooks"
-  },
-  "menuColor": "default",
-  "menuAccent": "subtle",
-  "registries": {}
-}
-</file>
-
-<file path="eslint.config.js">
-import js from '@eslint/js'
-import globals from 'globals'
-import reactHooks from 'eslint-plugin-react-hooks'
-import reactRefresh from 'eslint-plugin-react-refresh'
-import tseslint from 'typescript-eslint'
-import { defineConfig, globalIgnores } from 'eslint/config'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      js.configs.recommended,
-      tseslint.configs.recommended,
-      reactHooks.configs.flat.recommended,
-      reactRefresh.configs.vite,
-    ],
-    languageOptions: {
-      globals: globals.browser,
-    },
-  },
-])
-</file>
-
-<file path="index.html">
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>mp2frontend</title>
-  </head>
-  <body>
-    <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
-  </body>
-</html>
-</file>
-
-<file path="README.md">
-# React + TypeScript + Vite
-
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
-
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Oxc](https://oxc.rs)
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/)
-
-## React Compiler
-
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
-
-Note: This will impact Vite dev & build performances.
-
-## Expanding the ESLint configuration
-
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
-
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
-
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
-
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
-```
-</file>
-
-<file path="tsconfig.node.json">
-{
-  "compilerOptions": {
-    "tsBuildInfoFile": "./node_modules/.tmp/tsconfig.node.tsbuildinfo",
-    "target": "es2023",
-    "lib": ["ES2023"],
-    "module": "esnext",
-    "types": ["node"],
-    "skipLibCheck": true,
-
-    /* Bundler mode */
-    "moduleResolution": "bundler",
-    "allowImportingTsExtensions": true,
-    "verbatimModuleSyntax": true,
-    "moduleDetection": "force",
-    "noEmit": true,
-
-    /* Linting */
-    "noUnusedLocals": true,
-    "noUnusedParameters": true,
-    "erasableSyntaxOnly": true,
-    "noFallthroughCasesInSwitch": true
-  },
-  "include": ["vite.config.ts"]
-}
-</file>
-
-<file path="docs/ux/bitacora.md">
-# Bitácora de Sprinte — MeetClone Frontend
-
-## Sprint 1 — Auth, Validaciones, UI/UX y Documentación
-
-### Resumen
-- **Duración:** 1 sprint
-- **Objetivo:** Implementar autenticación manual y con Google, validaciones de username, rutas protegidas, documentación Swagger, y mejoras UX/HCI.
-- **Rama:** `feature/swagger-docs`
-
----
-
-### C1 — US-01/02/03 Auth manual y Google
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Registro manual con email, contraseña, nombre y apellido | ✅ | Endpoint POST `/register` |
-| Login con username o email + contraseña | ✅ | Endpoint POST `/login` |
-| Login con Google (popup OAuth) | ✅ | Firebase Auth + POST `/google-login` |
-| Persistencia de sesión en localStorage | ✅ | Clave `meet_clone_user` |
-| Flujo completo: registro → login → dashboard | ✅ | Sin pérdida de datos |
-
-**Decisiones UX:**
-- Descartado el uso de `sessionStorage` para pasar nombre entre registro y login — inconsistente con la fuente oficial (Firestore)
-- Implementada consulta directa a Firestore desde el frontend para obtener `name` + `surname` tras el login
-
----
-
-### C2 — TS-01: Validaciones Username
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Validación de longitud mínima (3 caracteres) | ✅ | Feedback en tiempo real |
-| Validación de caracteres permitidos (solo alfanumérico + `_`) | ✅ | Regex `^[a-zA-Z0-9_]+$` |
-| Auto-formateo: minúsculas y sin espacios | ✅ | `onChange` transforma el input |
-| Bloqueo de usernames duplicados (error del backend) | ✅ | Se muestra error en el campo |
-| Exigencia de username para usuarios de Google | ✅ | Pantalla intermedia `/choose-username` |
-
-**Decisiones UX:**
-- Validación en blur + en tiempo real si el campo ya fue tocado — balance entre feedback inmediato y no molestar antes de interactuar
-- Error de servidor mapeado al campo específico, no solo mensaje general
-
----
-
-### C3 — Rutas protegidas y Estados UI
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| `ProtectedRoute` redirige a `/` si no hay sesión | ✅ | `Navigate` de react-router |
-| `PublicRoute` redirige a `/home` si ya hay sesión | ✅ | Evita ver login estando autenticado |
-| `UsernameRequiredRoute` para Google pendiente | ✅ | Redirige a `/choose-username` |
-| Loading screen con spinner | ✅ | `LoadingScreen` con animación |
-| Alertas de error y éxito animadas | ✅ | Slide-in con colores distintivos |
-| Estados disabled en formularios durante carga | ✅ | Previene doble envío |
-
-**Decisiones UX:**
-- Loading screen con blur background y spinner evita parpadeo al verificar auth
-- Alertas animadas con color coding (rojo = error, verde = éxito, ámbar = advertencia)
-
----
-
-### C4 — API / DB Docs (Swagger)
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Instalación de `swagger-ui-react` | ✅ | v5.32.6 |
-| Spec OpenAPI 3.0 para User endpoints | ✅ | 5 endpoints documentados |
-| Página `/docs` con Swagger UI | ✅ | Ruta pública sin autenticación |
-| Schemas: RegisterData, LoginData, User, AuthResponse | ✅ | Tipos completos |
-
-**Archivos:**
-- `src/docs/user-api.json`
-- `src/pages/SwaggerDocs.tsx`
-- `src/types/swagger-ui-react.d.ts`
-
----
-
-### C5 — Evidencia UX/HCI + Bitácora
-
-**Estado: ✅ Completado**
-
-**Decisiones UX documentadas:**
-
-| # | Decisión | Base HCI |
-|---|----------|----------|
-| 1 | Card de login más ancha (960px), sin scroll, padding 56px | Ley de Fitts, Carga cognitiva, Proximidad |
-| 2 | Nombre completo desde Firestore en lugar de sessionStorage | Reconocimiento, Consistencia, Feedback |
-
-**Archivos:**
-- `docs/ux/evidencia-ux.md` — Documento de evidencia con principios HCI aplicados y capturas
-- `docs/ux/bitacora.md` — Este archivo
-
----
-
----
-
-## Sprint 2 — Perfil de Usuario, Eliminación de Cuenta y Gestión de Salas
-
-### Resumen
-- **Duración:** 1 sprint
-- **Objetivo:** Implementar vista/edición de perfil (US-04), eliminación de cuenta con confirmación (US-05), y creación/visualización de salas propias (US-06). Enfoque en contraste visual, microcopy, y principios HCI.
-- **Rama:** `feature/swagger-docs` (continuación)
-
----
-
-### C6 — US-04: Ver y Editar Perfil de Usuario
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Vista de perfil con datos desde `GET /profile/:uid` | ✅ | Avatar, nombre, apellido, username, email, provider badge |
-| Modo edición inline con inputs editables | ✅ | Placeholders: "Tu nombre", "Tu apellido", "Tu username", "Tu correo" |
-| Guardar cambios via `PUT /profile/:uid` | ✅ | Botón "Guardar Cambios" con estado "Guardando..." |
-| Cancelar edición restaura valores originales del servidor | ✅ | Sin confirmación intermedia (bajo riesgo) |
-| Alertas de éxito/error animadas con auto-dismiss | ✅ | Verde éxito (4s), rojo error (5s) |
-| Diferenciación visual modo lectura vs. edición | ✅ | Read: `.profile-field-value` con bg sutil; Edit: `.profile-field-input` con foco indigo |
-| Loading state con spinner | ✅ | `"Cargando perfil..."` + `LuLoaderCircle` |
-
-**Decisiones UX:**
-- Modo edición inline sin cambiar de ruta — reduce fricción y mantiene contexto
-- Placeholders posesivos («Tu nombre») — refuerzan pertenencia y guían entrada
-- Botón "Cancelar" restaura desde el servidor, no desde estado local — evita datos obsoletos
-- Provider badge (🔗 Google / 📧 Email) — visibilidad del método de autenticación
-
----
-
-### C7 — US-05: Eliminar Cuenta de Usuario
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Modal de confirmación con overlay blur | ✅ | `profile-modal-overlay` con `backdrop-filter: blur(8px)` |
-| Descripción del riesgo (irreversibilidad) | ✅ | Texto explícito: "permanente e irreversible" + "No podrás recuperar tu información" |
-| Confirmación por escritura "ELIMINAR" | ✅ | Input con placeholder "ELIMINAR", botón disabled hasta coincidir |
-| Botón destructivo con estilo rojo | ✅ | Gradient `#dc2626` → `#b91c1c` con glow rojo |
-| Eliminación en backend (`DELETE /profile/:uid`) + Firebase Auth | ✅ | Doble eliminación con fallback |
-| Loading state durante eliminación | ✅ | "Eliminando..." + spinner |
-| Redirección al home post-eliminación | ✅ | `navigate("/", { replace: true })` |
-| Icono pulsante de advertencia | ✅ | `LuShieldAlert` con animación pulse |
-
-**Decisiones UX:**
-- Modal con overlay blur aísla visualmente la acción del resto de la UI
-- Confirmación por escritura — requiere acción deliberada, previene clics accidentales
-- Botón "Sí, Eliminar mi Cuenta" en primera persona («mi Cuenta») — refuerza compromiso
-- Descripción triplemente enfática (permanente, irreversible, no recuperarás) — asegura comprensión del riesgo
-- Sin opción de "recordar elección" — cada eliminación debe ser explícita
-
----
-
-### C8 — US-06: Crear y Visualizar Salas Propias
-
-**Estado: ✅ Completado**
-
-| Tarea | Estado | Notas |
-|-------|--------|-------|
-| Listado de salas desde `GET /rooms/:uid` | ✅ | Grid responsive `repeat(auto-fill, minmax(320px,1fr))` |
-| Formulario inline para crear sala | ✅ | Input con counter `{n}/50`, validación de campo requerido |
-| Creación via `POST /rooms` | ✅ | Botón "Crear Sala" / "Creando..." |
-| Empty state motivacional | ✅ | `LuDoorOpen` icon, título "No tienes salas aún", botón "Crear mi primera sala" |
-| Tarjeta de sala con nombre, ID, fecha y botón entrar | ✅ | Badge "Administrador", ID copiable, fecha en formato `es-CO` |
-| Copiar ID de sala al portapapeles | ✅ | Feedback visual con `LuCheck` (2s) |
-| Alerta de éxito con nombre de sala | ✅ | `¡Sala "${room.name}" creada exitosamente!` |
-| Loading state con spinner | ✅ | `"Cargando tus salas..."` |
-| Character counter en tiempo real | ✅ | `{roomName.length}/50` |
-
-**Decisiones UX:**
-- Creación inline en el dashboard — evita navegar a otra página para crear
-- Placeholder con ejemplo contextual («ej: Estudio de Cálculo») — alinea con el dominio universitario
-- Empty state usa tono positivo («No tienes salas **aún**») + CTA grande — motivación sobre advertencia
-- Badge "Administrador" en cada tarjeta — identidad de rol clara
-- ID de sala en monospace con botón copiar — facilita compartir
-- Fecha formateada con `toLocaleDateString("es-CO")` — localización colombiana
-
----
-
-### Problemas conocidos / Pendientes
-
-- El endpoint `/login` del backend no devuelve `displayName` para usuarios registrados manualmente — se consulta Firestore como workaround
-- El botón "¿Olvidaste tu contraseña?" en Login no tiene funcionalidad — placeholder
-- No hay endpoint para actualizar perfil de usuario (post-registro) — resuelto en C6
-- La sala interactiva (US-07) con video/chat en tiempo real está en desarrollo
-
----
-
-### Tiempo estimado vs real
-
-| Actividad | Estimado | Real |
-|-----------|----------|------|
-| Auth manual + Google (C1) | 4h | — |
-| Validaciones username (C2) | 2h | — |
-| Rutas protegidas (C3) | 1.5h | — |
-| Swagger docs (C4) | 2h | — |
-| UX/HCI mejoras + bitácora (C5) | 2h | — |
-| Perfil de usuario (C6) | 3h | — |
-| Eliminar cuenta (C7) | 2h | — |
-| Crear y listar salas (C8) | 3h | — |
-| **Total** | **19.5h** | — |
-</file>
-
-<file path="docs/ux/evidencia-ux.md">
-# Evidencia UX/HCI — Sprint 1
-
-## Decisión 1: Card de Login más grande, ancha y sin scroll
-
-**Problema:** La pantalla de login era angosta (max-width 430px), obligaba a hacer scroll en viewports medianos, y los elementos se sentían apretados contra los bordes.
-
-**Solución implementada:**
-- Card ampliada a 960px de ancho máximo con padding interno de 56px
-- Altura fija del viewport con `height: 100dvh; overflow: hidden` en el contenedor
-- Centrado vertical absoluto sin estiramiento forzado
-- Inputs de 54px de altura, botones de 56px, border-radius de 40px
-
-**Principios HCI aplicados:**
-| Principio | Aplicación |
-|-----------|-----------|
-| **Ley de Fitts** | Targets más grandes (inputs 54px, botones 56px) reducen el tiempo de interacción |
-| **Proximidad** | Padding de 56px agrupa visualmente secciones sin saturar |
-| **Carga cognitiva** | Sin scroll: toda la información visible de un vistazo |
-| **Consistencia** | Mismo patrón visual en Login y Register |
-
-**Captura:** (insertar screenshot de la card de login en viewport 1920×1080 mostrando la card centrada sin scroll)
-
----
-
-## Decisión 2: Nombre completo del usuario desde Firestore
-
-**Problema:** Al registrarse con email/contraseña, el dashboard mostraba "Usuario" y "sin_usuario" porque el backend no devolvía `displayName` ni `username` en la respuesta de login.
-
-**Solución incorrecta (descartada):** Guardar `name`+`surname` en `sessionStorage` durante el registro y leerlo al hacer login.
-
-**Solución final:** Consultar Firestore directamente desde el frontend con el `uid` del usuario para obtener los campos `name` y `surname`, construyendo el `displayName` como «Jhoan Munoz».
-
-**Principios HCI aplicados:**
-| Principio | Aplicación |
-|-----------|-----------|
-| **Reconocimiento sobre recuerdo** | El usuario ve su identidad real sin tener que recordar qué nombre usó |
-| **Feedback** | El dashboard muestra inmediatamente el nombre completo tras el login |
-| **Consistencia** | Misma fuente de datos (Firestore) para usuarios manuales y de Google |
-| **Visibilidad del estado del sistema** | El nombre aparece en el navbar como confirmación de identidad |
-
-**Captura:** (insertar screenshot del navbar mostrando "Jhoan Munoz" y "@jhoan_munoz" después de login manual)
-
----
-
-## Decisión 3: Contraste y microcopy en Perfil (US-04), Eliminación de Cuenta (US-05) y Salas (US-06)
-
-**Problema:** Las páginas de perfil, eliminación de cuenta y dashboard de salas requerían decisiones de contraste visual y microcopy que mantuvieran la coherencia con el sistema de diseño oscuro existente y guiaran al usuario sin ambigüedad.
-
-**Contexto — US-04 (Ver y Editar Perfil):**
-- Los campos de solo lectura vs. editables debían diferenciarse visualmente sin romper la consistencia.
-- El feedback de acción (guardar/cancelar) debía ser inmediato y claro.
-
-**Contexto — US-05 (Eliminar Cuenta):**
-- Acción irreversible: el microcopy debía comunicar claramente las consecuencias.
-- Confirmación por escritura explícita («ELIMINAR») para prevenir errores fatales.
-- Contraste visual agresivo (rojo) para señalizar peligro.
-
-**Contexto — US-06 (Crear y Visualizar Salas Propias):**
-- El placeholder del input de creación debía sugerir un caso de uso real.
-- Las salas vacías debían tener un estado vacío motivacional, no un mensaje genérico.
-- La tarjeta de sala debía presentar la información jerarquizada (nombre, ID, fecha, entrar).
-
-**Soluciones implementadas:**
-
-### Contraste (Sistema de color consistente)
-
-| Elemento | Color/Fondo | Ratio de contraste aproximado |
-|----------|-------------|-------------------------------|
-| Fondo página | `#05051a` | — |
-| Texto primario | `rgba(255,255,255,0.9)` | ~14:1 sobre fondo |
-| Texto secundario (labels, metadatos) | `rgba(255,255,255,0.5)` | ~7:1 |
-| Texto terciario (placeholders) | `rgba(255,255,255,0.28)` | ~4:1 (mínimo para decorativo) |
-| Acento (links, badges) | `#a5b4fc` | ~9:1 |
-| Éxito (alertas, botón guardar) | `#059669` → `#10b981` gradient | ~5.5:1 |
-| Error/peligro (alertas, eliminar) | `#dc2626` → `#b91c1c` gradient | ~4.5:1 |
-| Card glassmorphism | `rgba(15,12,32,0.55)` + `backdrop-filter: blur(32px)` | Mantiene legibilidad del texto |
-| Input focus | Indigo glow `rgba(99,102,241,0.6)` | Señalización multimodal |
-| Input error (US-05 modal) | Borde rojo `rgba(239,68,68,0.2)` + glow `rgba(239,68,68,0.3)` | Contraste cromático alto |
-
-### Microcopy (Español — es-CO)
-
-| Contexto | Texto | Principio HCI |
-|----------|-------|---------------|
-| Placeholder nombre | `"Tu nombre"` | **Naturalidad**: tono posesivo dueño del dato |
-| Placeholder apellido | `"Tu apellido"` | **Consistencia**: mismo patrón que nombre |
-| Placeholder username | `"Tu username"` | **Consistencia**: mismo patrón |
-| Placeholder email | `"Tu correo"` | **Consistencia**: coloquial pero preciso |
-| Placeholder crear sala | `"Nombre de la sala (ej: Estudio de Cálculo)"` | **Ejemplo contextual**: sugiere un caso de estudio real universitario |
-| Botón editar | `"Editar Perfil"` | **Reconocimiento**: verbo + objeto directo |
-| Botón guardar | `"Guardar Cambios"` / `"Guardando..."` | **Feedback**: estado loading con gerundio |
-| Botón cancelar (edición) | `"Cancelar"` | **Consistencia**: mismo término en toda la app |
-| Botón eliminar cuenta | `"Eliminar Cuenta"` | **Claridad**: sin eufemismos |
-| Éxito al guardar | `"¡Perfil actualizado exitosamente!"` | **Feedback positivo**: exclamación + adverbio |
-| Error al guardar | `"Error al actualizar perfil"` / mensaje del servidor | **Feedback informativo**: causa del error |
-| Título modal eliminar | `"⚠️ Eliminar Cuenta"` | **Señal de peligro**: icono + texto |
-| Descripción modal | `"Esta acción es permanente e irreversible. Se eliminarán todos tus datos de Firestore y tu cuenta de Firebase Auth. No podrás recuperar tu información."` | **Comunicación de riesgo**: triple énfasis (permanente, irreversible, no recuperarás) |
-| Confirmación | `"Escribe ELIMINAR para confirmar:"` / placeholder `"ELIMINAR"` | **Forense**: requiere escritura activa, no solo clic |
-| Botón confirmar delete | `"Sí, Eliminar mi Cuenta"` / `"Eliminando..."` | **Compromiso**: primera persona posesiva («mi Cuenta») |
-| Botón cancelar (modal) | `"Cancelar"` | **Consistencia**: misma etiqueta que en otros contextos |
-| Título dashboard | `"Mis Salas de Estudio"` | **Pertenencia**: posesivo «Mis» + propósito «de Estudio» |
-| Subtítulo dashboard | `"Crea y administra tus espacios de estudio colaborativo"` | **Propósito**: explica el valor del producto |
-| Estado vacío título | `"No tienes salas aún"` | **Neutral positivo**: sin culpa, «aún» implica posibilidad |
-| Estado vacío descripción | `"¡Crea tu primera sala de estudio y comienza a colaborar con otros estudiantes!"` | **Llamado a la acción**: tono entusiasta, especifica el beneficio social |
-| Botón empty state | `"Crear mi primera sala"` | **Personalizado**: «mi primera» → owned action |
-| Crear sala exitoso | `` `¡Sala "${room.name}" creada exitosamente!` `` | **Feedback nominal**: incluye el nombre de la sala creada |
-| Badge rol sala | `"Administrador"` | **Identidad de rol**: indica propiedad |
-| Botón entrar sala | `"Entrar a la sala"` | **Acción clara**: verbo de movimiento |
-| Label contador crear sala | `"{n}/50"` | **Restricción visible**: indica límite de caracteres en tiempo real |
-| Loading perfil | `"Cargando perfil..."` | **Feedback**: estado de carga descriptivo |
-| Loading salas | `"Cargando tus salas..."` | **Feedback**: estado de carga con posesivo |
-| Error al crear sala | `"El nombre de la sala es requerido"` | **Prevención de error**: validación inmediata |
-
-### Principios HCI aplicados
-
-| Principio | Aplicación en US-04 | Aplicación en US-05 | Aplicación en US-06 |
-|-----------|---------------------|---------------------|---------------------|
-| **Prevención de errores** | Cancel edit descarta cambios sin confirmación | Modal + escritura «ELIMINAR» evita eliminación accidental | Validación `!roomName.trim()` antes de enviar |
-| **Visibilidad del estado del sistema** | Labels muestran modo edición/lectura, alertas de éxito/error | Pulsing icon (`LuShieldAlert`), botón disabled hasta escribir «ELIMINAR» | Counter `{n}/50`, loading spinner + texto, alertas |
-| **Consistencia y estándares** | Mismos patrones glassmorphism, inputs, botones que Login/Register | Botón delete usa rojo consistente con logout y otros destructivos | Mismo sistema de alertas que Profile (`.profile-alert`) |
-| **Control y libertad del usuario** | Cancelar edición restaura valores originales | Cancelar modal cierra sin eliminar | Cancelar creación descarta formulario |
-| **Reconocimiento sobre recuerdo** | Placeholders recuerdan qué escribir en cada campo | «ELIMINAR» visible en placeholder — el usuario no necesita memorizar | Empty state motiva acción sin tener que recordar dónde crear |
-| **Flexibilidad y eficiencia** | Edición inline sin navegar a otra página | — | Crear sala desde el mismo dashboard sin cambiar de ruta |
-| **Diseño estético y minimalista** | Glassmorphism, espaciado generoso (padding 36-40px), jerarquía visual clara | Modal centrado, icono pulsante, sin ruido visual | Grid responsive, tarjetas con info jerárquica, hover states sutiles |
-| **Ayuda a los usuarios** | Alertas con color coding (verde=éxito, rojo=error) | Descripción explícita de irreversibilidad | Placeholder con ejemplo concreto de uso |
-
-**Capturas:** (insertar screenshots de perfil en edición, modal de eliminar con texto escrito, dashboard con salas listadas y empty state)
-
----
-
-## Resumen de cambios UX del Sprint
-
-| Sprint | Cambio | Impacto UX |
-|--------|--------|------------|
-| C1 | Auth manual + Google con Firestore | Flujo completo sin pérdida de sesión |
-| C2 | Validación de unicidad de username | Feedback inmediato, evita conflictos |
-| C3 | Rutas protegidas y estados de carga/error | Dashboard inaccesible sin login, mensajes claros |
-| C4 | Documentación Swagger de User API | Visibilidad del contrato API para desarrollo |
-| C5 | Card login más grande y nombre desde Firestore | Menos fricción, identidad visible |
-| **C6** | **Perfil de usuario (US-04) — ver, editar, guardar** | **Control de identidad, feedback inmediato, modo edición/lectura claro** |
-| **C7** | **Eliminar cuenta (US-05) — modal con confirmación escrita** | **Prevención de error fatal, microcopy de riesgo, contraste rojo señalizador** |
-| **C8** | **Crear y listar salas (US-06) — dashboard + empty state** | **Gestión visual de espacios, jerarquía de información, microcopy motivacional** |
-</file>
-
-<file path="src/pages/Join.tsx">
-import React, { useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { LuVideo, LuArrowLeft, LuDoorOpen, LuLoaderCircle } from "react-icons/lu";
-
-const Join: React.FC = () => {
-  const [meetingId, setMeetingId] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
-  const navigate = useNavigate();
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    setErrorMsg("");
-
-    const cleanedId = meetingId.trim();
-    if (!cleanedId) {
-      setErrorMsg("El ID de la reunión es requerido");
-      return;
-    }
-
-    // Pattern check: 3-4-3 (e.g., abc-defg-hij)
-    const pattern = /^[a-z]{3}-[a-z]{4}-[a-z]{3}$/;
-    if (!pattern.test(cleanedId)) {
-      setErrorMsg("Formato inválido. Debe ser abc-defg-hij (3-4-3 caracteres en minúscula)");
-      return;
-    }
-
-    setSubmitting(true);
-    // Directly navigate to the Room. The Room component handles socket validation in real-time.
-    setTimeout(() => {
-      navigate(`/room/${cleanedId}`);
-    }, 800);
-  };
-
-  return (
-    <div className="profile-page flex items-center justify-center min-h-screen">
-      <div className="auth-bg">
-        <div className="auth-blob auth-blob--1" />
-        <div className="auth-blob auth-blob--2" />
-      </div>
-
-      <div className="auth-card relative z-10 max-w-md w-full mx-4">
-        <div className="auth-header">
-          <div className="auth-logo">
-            <LuVideo size={24} />
-          </div>
-          <h2 className="auth-title">Unirse a una Reunión</h2>
-          <p className="auth-subtitle">Ingresa el identificador único para ingresar a la sala</p>
-        </div>
-
-        <form onSubmit={handleSubmit} className="auth-form mt-6">
-          <div className="auth-input-group">
-            <label htmlFor="meetingId" className="auth-label">
-              ID de la Reunión
-            </label>
-            <input
-              type="text"
-              id="meetingId"
-              value={meetingId}
-              onChange={(e) => setMeetingId(e.target.value.toLowerCase())}
-              placeholder="ej: abc-defg-hij"
-              className="auth-input text-center tracking-widest font-mono"
-              maxLength={12}
-              disabled={submitting}
-              autoFocus
-            />
-            {errorMsg && <p className="auth-error-msg mt-1.5 text-xs text-red-400">{errorMsg}</p>}
-          </div>
-
-          <button
-            type="submit"
-            disabled={submitting || !meetingId.trim()}
-            className="auth-btn mt-6 flex items-center justify-center gap-2"
-          >
-            {submitting ? (
-              <LuLoaderCircle className="profile-btn-spinner" size={18} />
-            ) : (
-              <LuDoorOpen size={18} />
-            )}
-            {submitting ? "Accediendo..." : "Unirse a la Reunión"}
-          </button>
-        </form>
-
-        <button
-          onClick={() => navigate("/home")}
-          disabled={submitting}
-          className="mt-6 flex items-center justify-center gap-2 text-white/50 hover:text-white text-xs w-full transition-all duration-200"
-        >
-          <LuArrowLeft size={14} />
-          <span>Volver al Inicio</span>
-        </button>
-      </div>
-    </div>
-  );
-};
-
-export default Join;
-</file>
-
-<file path="src/services/firebase.ts">
-import { initializeApp } from "firebase/app";
-import { getAuth } from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
-
-const firebaseConfig = {
-  apiKey: "AIzaSyA1j3mybOpG9gcINcts2Pk8veE_m3VCGJI",
-  authDomain: "mproyecto2-e6d4e.firebaseapp.com",
-  projectId: "mproyecto2-e6d4e",
-  storageBucket: "mproyecto2-e6d4e.firebasestorage.app",
-  messagingSenderId: "881475675016",
-  appId: "1:881475675016:web:aa61a99fca124074a4903d",
-};
-
-const app = initializeApp(firebaseConfig);
-
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+<file path=".env.example">
+VITE_FIREBASE_API_KEY=your_api_key
+VITE_FIREBASE_AUTH_DOMAIN=your_auth_domain
+VITE_FIREBASE_PROJECT_ID=your_project_id
+VITE_FIREBASE_STORAGE_BUCKET=your_storage_bucket
+VITE_FIREBASE_MESSAGING_SENDER_ID=your_messaging_sender_id
+VITE_FIREBASE_APP_ID=your_app_id
+
+# Backend URLs (default to production, override for local dev)
+VITE_API_URL=http://localhost:3000
+VITE_SOCKET_URL=http://localhost:3001
 </file>
 
 <file path="tsconfig.app.json">
@@ -2922,25 +1839,632 @@ export const db = getFirestore(app);
 }
 </file>
 
-<file path="vite.config.ts">
-import { defineConfig } from "vite";
-import react, { reactCompilerPreset } from "@vitejs/plugin-react";
-import babel from "@rolldown/plugin-babel";
-import tailwindcss from "@tailwindcss/vite";
-import path from "path"
-// https://vite.dev/config/
-export default defineConfig({
-  plugins: [
-    react(),
-    tailwindcss(),
-    babel({ presets: [reactCompilerPreset()] }),
-  ],
-  resolve: {
-    alias: {
-      "@": path.resolve(__dirname, "./src"),
-    },
-  },  
-});
+<file path="src/pages/Dashboard.tsx">
+import React, { useEffect, useState, useRef } from "react";
+import { useAuth } from "../contexts/AuthContext";
+import { User } from "../services/auth";
+import type { RoomData } from "../services/auth";
+import { useNavigate } from "react-router-dom";
+import { MdDelete, MdCancel } from "react-icons/md";
+import {
+  connectSocket,
+  disconnectSocket,
+ 
+  type Socket,
+} from "../services/socket";
+import {
+  LuVideo,
+  LuPlus,
+  LuDoorOpen,
+  LuCopy,
+  LuCheck,
+  LuCircleAlert,
+  LuLoaderCircle,
+  LuLayoutDashboard,
+  LuLogOut,
+  LuUser,
+  LuClock,
+  LuHash,
+  LuSparkles,
+  LuShieldAlert,
+  LuTrash2,
+} from "react-icons/lu";
+import { FaEdit } from "react-icons/fa";
+
+const Dashboard: React.FC = () => {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const socketRef = useRef<Socket | null>(null);
+  const userRef = useRef(user);
+
+  const [rooms, setRooms] = useState<RoomData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [creating, setCreating] = useState(false);
+  const [showCreateForm, setShowCreateForm] = useState(false);
+  const [roomName, setRoomName] = useState("");
+  const [successMsg, setSuccessMsg] = useState("");
+  const [errorMsg, setErrorMsg] = useState("");
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+  const [deleteRoom, setDeleteRoom] = useState(false);
+  const [deleting, setDeleting] = useState(false);
+  const [roomDeleted, setRoomDeleted] = useState(false);
+  const [isAdmin, setIsAdmin] = useState(false);
+
+  // ✅ FIX: estados independientes por sala
+  const [editingRoomId, setEditingRoomId] = useState<string | null>(null);
+  const [editingRoomName, setEditingRoomName] = useState("");
+  const [updatingName, setUpdatingName] = useState(false);
+
+
+
+  useEffect(() => {
+    userRef.current = user;
+  }, [user]);
+
+  const [roomToDelete, setRoomToDelete] = useState<string | null>(null);
+
+  const socketDeleteRoom = () => {
+    if (!roomToDelete || !socketRef.current) return;
+    console.log("¿Conectado?", socketRef.current.connected);
+    setDeleting(true);
+    socketRef.current?.emit("delete-room", {
+      roomId: roomToDelete,
+      uid: user!.uid,
+    });
+    console.log(roomToDelete, user!.uid);
+  };
+
+  useEffect(() => {
+    socketRef.current = connectSocket();
+
+    socketRef.current.on(
+      "room-deleted",
+      (data: { roomId: string; message: string; uid: string }) => {
+        console.log("userRef.uid:", userRef.current?.uid);
+        console.log("data.uid:", data.uid);
+        const isHost = userRef.current?.uid === data.uid;
+        setIsAdmin(isHost);
+        setDeleteRoom(false);
+        setRoomDeleted(true);
+        setDeleting(false);
+
+        setRooms((prev) => prev.filter((room) => room.roomId !== data.roomId));
+
+        setTimeout(() => {
+          setRoomDeleted(false);
+        }, 3000);
+
+     
+      },
+    );
+    return () => {
+      socketRef.current?.off("room-deleted");
+      disconnectSocket();
+    };
+  }, []);
+
+  const fetchRooms = async () => {
+    try {
+      setLoading(true);
+      const result = await User.getRooms(user!.uid);
+      setRooms(result.rooms);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error al cargar salas");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user?.uid) {
+      fetchRooms();
+    }
+  }, [user?.uid]);
+
+  const handleCreateRoom = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg("");
+    setSuccessMsg("");
+
+    if (!roomName.trim()) {
+      setErrorMsg("El nombre de la sala es requerido");
+      return;
+    }
+
+    setCreating(true);
+    try {
+      const result = await User.createRoom({
+        name: roomName.trim(),
+        hostUid: user!.uid,
+        hostUsername: user!.username || "anónimo",
+      });
+
+      setRooms((prev) => [result.room, ...prev]);
+      setRoomName("");
+      setShowCreateForm(false);
+      setSuccessMsg(`¡Sala "${result.room.name}" creada exitosamente!`);
+      setTimeout(() => setSuccessMsg(""), 4000);
+    } catch (err) {
+      setErrorMsg(err instanceof Error ? err.message : "Error al crear sala");
+      setTimeout(() => setErrorMsg(""), 5000);
+    } finally {
+      setCreating(false);
+    }
+  };
+
+  // ✅ FIX: handler dedicado para editar nombre, recibe roomId
+  const handleEditName = async (e: React.FormEvent, roomId: string) => {
+    e.preventDefault();
+    if (!editingRoomName.trim()) return;
+
+    const currentRoom = rooms.find((r) => r.roomId === roomId);
+    if (!currentRoom) return;
+
+    setUpdatingName(true);
+    try {
+      await User.updateRoomName({
+        name: currentRoom.name,
+        newName: editingRoomName.trim(),
+        hostUid: user!.uid,
+        roomId: roomId,
+      });
+
+      setRooms((prev) =>
+        prev.map((r) =>
+          r.roomId === roomId ? { ...r, name: editingRoomName.trim() } : r,
+        ),
+      );
+      setSuccessMsg("¡Nombre de sala actualizado!");
+      setTimeout(() => setSuccessMsg(""), 3000);
+    } catch (err) {
+      setErrorMsg(
+        err instanceof Error ? err.message : "Error al actualizar nombre",
+      );
+      setTimeout(() => setErrorMsg(""), 5000);
+    } finally {
+      setUpdatingName(false);
+      setEditingRoomId(null);
+      setEditingRoomName("");
+    }
+  };
+
+  const copyRoomId = (roomId: string) => {
+    navigator.clipboard.writeText(roomId);
+    setCopiedId(roomId);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
+  const formatDate = (dateStr: string) => {
+    const date = new Date(dateStr);
+    return date.toLocaleDateString("es-CO", {
+      day: "numeric",
+      month: "short",
+      year: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    });
+  };
+
+  return (
+    <div className="dashboard-page">
+      <div className="auth-bg">
+        <div className="auth-blob auth-blob--1" />
+        <div className="auth-blob auth-blob--2" />
+      </div>
+
+      {/* Navbar */}
+      <nav className="dashboard-nav">
+        <div className="dashboard-nav-inner">
+          <div className="dashboard-nav-left">
+            <div className="dashboard-nav-logo">
+              <LuVideo size={20} />
+            </div>
+            <span className="dashboard-nav-title">MeetClone</span>
+          </div>
+
+          <div className="dashboard-nav-right">
+            <button
+              onClick={() => navigate("/profile")}
+              className="dashboard-profile-chip"
+            >
+              {user?.photoURL ? (
+                <img
+                  src={user.photoURL}
+                  alt="Avatar"
+                  className="dashboard-profile-avatar"
+                />
+              ) : (
+                <div className="dashboard-profile-avatar-fallback">
+                  {user?.displayName ? (
+                    user.displayName.charAt(0).toUpperCase()
+                  ) : (
+                    <LuUser size={14} />
+                  )}
+                </div>
+              )}
+              <div className="dashboard-profile-info">
+                <span className="dashboard-profile-name">
+                  {user?.displayName || user?.username || "Usuario"}
+                </span>
+                <span className="dashboard-profile-tag">
+                  @{user?.username || "sin_usuario"}
+                </span>
+              </div>
+            </button>
+
+            <button
+              onClick={logout}
+              className="dashboard-logout-btn"
+              title="Cerrar Sesión"
+            >
+              <LuLogOut size={16} />
+              <span>Salir</span>
+            </button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Main Content */}
+      <main className="dashboard-main">
+        <div className="dashboard-container">
+          {/* Header Section */}
+          <div className="dashboard-header">
+            <div className="dashboard-header-text">
+              <h1 className="dashboard-title">
+                <LuLayoutDashboard size={28} />
+                Mis Salas de Estudio
+              </h1>
+              <p className="dashboard-subtitle">
+                Crea y administra tus espacios de estudio colaborativo
+              </p>
+            </div>
+            <button
+              onClick={() => setShowCreateForm(true)}
+              className="dashboard-create-btn"
+            >
+              <LuPlus size={18} />
+              Crear Sala
+            </button>
+          </div>
+
+          {/* Alerts */}
+          {successMsg && (
+            <div className="profile-alert profile-alert--success">
+              <LuCheck size={18} />
+              <span>{successMsg}</span>
+            </div>
+          )}
+          {errorMsg && (
+            <div className="profile-alert profile-alert--error">
+              <LuCircleAlert size={18} />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          {roomDeleted &&
+            (isAdmin ? (
+              <div className="room-status-page">
+                <div className="auth-bg">
+                  <div className="auth-blob auth-blob--1" />
+                  <div className="auth-blob auth-blob--2" />
+                </div>
+                <div className="room-status-card">
+                  <LuLoaderCircle className="room-spinner" size={48} />
+                  <h2>Sala eliminada</h2>
+                  <p>
+                    Haz eliminado la sala, todas las personas que se encontraban
+                    en ella han sido desconectadas inmediatamente
+                  </p>
+                </div>
+              </div>
+            ) : (
+              <div className="room-status-page">
+                <div className="auth-bg">
+                  <div className="auth-blob auth-blob--1" />
+                  <div className="auth-blob auth-blob--2" />
+                </div>
+                <div className="room-status-card">
+                  <LuLoaderCircle className="room-spinner" size={48} />
+                  <h2>Sala eliminada</h2>
+                  <p>
+                    Sala eliminada por el administrador, por favor contacte a la
+                    persona responsable de la sala
+                  </p>
+                </div>
+              </div>
+            ))}
+
+          {/* Create Room Form */}
+          {showCreateForm && (
+            <div className="dashboard-create-card">
+              <div className="dashboard-create-header">
+                <LuSparkles size={20} className="dashboard-create-icon" />
+                <h3>Crear Nueva Sala</h3>
+              </div>
+              <form
+                onSubmit={handleCreateRoom}
+                className="dashboard-create-form"
+              >
+                <div className="dashboard-create-input-wrap">
+                  <input
+                    type="text"
+                    value={roomName}
+                    onChange={(e) => setRoomName(e.target.value)}
+                    placeholder="Nombre de la sala (ej: Estudio de Cálculo)"
+                    className="dashboard-create-input"
+                    maxLength={50}
+                    disabled={creating}
+                    autoFocus
+                  />
+                  <span className="dashboard-create-counter">
+                    {roomName.length}/50
+                  </span>
+                </div>
+                <div className="dashboard-create-actions">
+                  <button
+                    type="submit"
+                    disabled={creating || !roomName.trim()}
+                    className="profile-btn profile-btn--save"
+                  >
+                    {creating ? (
+                      <LuLoaderCircle
+                        className="profile-btn-spinner"
+                        size={16}
+                      />
+                    ) : (
+                      <LuPlus size={16} />
+                    )}
+                    {creating ? "Creando..." : "Crear Sala"}
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setShowCreateForm(false);
+                      setRoomName("");
+                    }}
+                    disabled={creating}
+                    className="profile-btn profile-btn--cancel"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </form>
+            </div>
+          )}
+
+          {/* Rooms List or Empty State */}
+          {loading ? (
+            <div className="dashboard-loading">
+              <LuLoaderCircle className="profile-spinner" size={40} />
+              <p>Cargando tus salas...</p>
+            </div>
+          ) : rooms.length === 0 ? (
+            <div className="dashboard-empty">
+              <div className="dashboard-empty-icon">
+                <LuDoorOpen size={64} />
+              </div>
+              <h2 className="dashboard-empty-title">No tienes salas aún</h2>
+              <p className="dashboard-empty-desc">
+                ¡Crea tu primera sala de estudio y comienza a colaborar con
+                otros estudiantes!
+              </p>
+              <button
+                onClick={() => setShowCreateForm(true)}
+                className="dashboard-create-btn dashboard-create-btn--large"
+              >
+                <LuPlus size={20} />
+                Crear mi primera sala
+              </button>
+            </div>
+          ) : (
+            <div className="dashboard-rooms-grid">
+              {rooms.map((room) => {
+                const isEditing = editingRoomId === room.id;
+                return (
+                <div
+                  key={room.id}
+                  className={`dashboard-room-card${isEditing ? " dashboard-room-card--editing" : ""}`}
+                >
+                  {/* ── Header: icono + nombre (inline edit) + botón editar ── */}
+                  <div className="dashboard-room-header">
+                    <div className="dashboard-room-icon">
+                      <LuVideo size={20} />
+                    </div>
+
+                    {isEditing ? (
+                      /* Modo edición inline */
+                      <form
+                        onSubmit={(e) => handleEditName(e, room.roomId)}
+                        className="dashboard-room-edit-form"
+                      >
+                        <div className="dashboard-room-edit-input-wrap">
+                            <input
+                              type="text"
+                              value={editingRoomName}
+                              onChange={(e) => setEditingRoomName(e.target.value)}
+                              placeholder="Nombre de la sala"
+                              className="dashboard-room-edit-input"
+                              maxLength={50}
+                              autoFocus
+                              disabled={updatingName}
+                              onKeyDown={(e) => {
+                                if (e.key === "Escape" && !updatingName) {
+                                  setEditingRoomId(null);
+                                  setEditingRoomName("");
+                                }
+                              }}
+                            />
+                            <span className="dashboard-room-edit-counter">
+                              {editingRoomName.length}/50
+                            </span>
+                          </div>
+                          <div className="dashboard-room-edit-actions">
+                            <button
+                              type="submit"
+                              disabled={!editingRoomName.trim() || updatingName}
+                              className="dashboard-room-edit-confirm"
+                              title="Guardar (Enter)"
+                            >
+                              {updatingName ? (
+                                <LuLoaderCircle
+                                  size={15}
+                                  className="profile-btn-spinner"
+                                />
+                              ) : (
+                                <LuCheck size={15} />
+                              )}
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                setEditingRoomId(null);
+                                setEditingRoomName("");
+                              }}
+                              disabled={updatingName}
+                              className="dashboard-room-edit-cancel"
+                              title="Cancelar (Esc)"
+                            >
+                              <MdCancel size={15} />
+                            </button>
+                          </div>
+                      </form>
+                    ) : (
+                      /* Modo lectura */
+                      <div className="dashboard-room-meta">
+                        <h3 className="dashboard-room-name">{room.name}</h3>
+                        <span className="dashboard-room-role">
+                          Administrador
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Botón editar — siempre visible, se oculta mientras edita */}
+                    {!isEditing && (
+                      <button
+                        onClick={() => {
+                          setEditingRoomId(room.id);
+                          setEditingRoomName(room.name);
+                        }}
+                        className="dashboard-room-edit-btn"
+                        title="Editar nombre"
+                        aria-label="Editar nombre de la sala"
+                      >
+                        <FaEdit size={13} />
+                        <span>Editar</span>
+                      </button>
+                    )}
+                  </div>
+
+                  {/* ── Detalles ── */}
+                  <div className="dashboard-room-details">
+                    <div className="dashboard-room-detail">
+                      <LuHash size={14} />
+                      <span className="dashboard-room-id">{room.roomId}</span>
+                      <button
+                        onClick={() => copyRoomId(room.roomId)}
+                        className="dashboard-copy-btn"
+                        title="Copiar ID"
+                      >
+                        {copiedId === room.roomId ? (
+                          <LuCheck size={14} />
+                        ) : (
+                          <LuCopy size={14} />
+                        )}
+                      </button>
+                    </div>
+                    <div className="dashboard-room-detail">
+                      <LuClock size={14} />
+                      <span>{formatDate(room.createdAt)}</span>
+                    </div>
+                  </div>
+
+                  {/* ── Acciones ── */}
+                  <div className="dashboard-room-actions">
+                    <button
+                      onClick={() => navigate(`/room/${room.roomId}`)}
+                      className="dashboard-room-enter"
+                      disabled={isEditing}
+                    >
+                      <LuDoorOpen size={16} />
+                      Entrar a la sala
+                    </button>
+                    <button
+                      onClick={() => {
+                        setDeleteRoom(true);
+                        setRoomToDelete(room.roomId);
+                      }}
+                      className="dashboard-room-delete-btn"
+                      disabled={isEditing}
+                      title="Eliminar sala"
+                      aria-label="Eliminar sala"
+                    >
+                      <MdDelete size={18} />
+                    </button>
+                  </div>
+                </div>
+                );
+              })}
+            </div>
+          )}
+
+          {deleteRoom && (
+            <div className="profile-modal-overlay" onClick={() => {}}>
+              <div
+                className="profile-modal"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <div className="profile-modal-icon">
+                  <LuShieldAlert size={48} />
+                </div>
+                <h3 className="profile-modal-title">⚠️ Eliminar Sala</h3>
+                <p className="profile-modal-desc">
+                  Si eliminas esta sala todas las <strong>PERSONAS</strong> que
+                  se encuentren en ella se desconectaran inmediatamente
+                </p>
+
+                <div className="profile-modal-actions">
+                  <button
+                    onClick={() => {
+                      socketDeleteRoom();
+                    }}
+                    className="profile-btn profile-btn--confirm-delete"
+                  >
+                    {deleting ? (
+                      <LuLoaderCircle
+                        className="profile-btn-spinner"
+                        size={16}
+                      />
+                    ) : (
+                      <LuTrash2 size={16} />
+                    )}
+                    {deleting ? "Eliminando..." : "Eliminar Sala"}
+                  </button>
+                  <button
+                    onClick={() => {
+                      setDeleteRoom(false);
+                      setRoomToDelete(null);
+                    }}
+                    disabled={deleting}
+                    className="profile-btn profile-btn--cancel-modal"
+                  >
+                    Cancelar
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+        </div>
+      </main>
+
+      {/* Footer */}
+      <footer className="dashboard-footer">
+        &copy; 2026 MeetClone. Todos los derechos reservados.
+      </footer>
+    </div>
+  );
+};
+
+export default Dashboard;
 </file>
 
 <file path="src/pages/Register.tsx">
@@ -3442,209 +2966,89 @@ export function Register() {
 export default Register;
 </file>
 
-<file path="src/contexts/AuthContext.tsx">
-import React, { createContext, useContext, useEffect, useState } from "react";
-import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
-import { auth } from "../services/firebase";
-import { User } from "../services/auth";
-import type { AuthUser, UpdateProfileData } from "../services/auth";
+<file path="src/services/firebase.ts">
+import { initializeApp } from "firebase/app";
+import { getAuth } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 
-interface AuthContextType {
-  user: AuthUser | null;
-  loading: boolean;
-  needsUsername: boolean;
-  tempGoogleUser: AuthUser | null;
-  login: (userData: AuthUser) => void;
-  logout: () => Promise<void>;
-  signInWithGoogle: () => Promise<void>;
-  completeGoogleProfile: (username: string) => Promise<void>;
-  updateUser: (updates: UpdateProfileData) => Promise<void>;
-  deleteAccount: () => Promise<void>;
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+};
+
+const app = initializeApp(firebaseConfig);
+
+export const auth = getAuth(app);
+export const db = getFirestore(app);
+</file>
+
+<file path="src/services/socket.ts">
+import { io, type Socket } from "socket.io-client";
+
+const SOCKET_URL =
+  import.meta.env.VITE_SOCKET_URL ?? "https://backendrealtime.onrender.com";
+
+let socket: Socket | null = null;
+
+export function connectSocket(): Socket {
+  if (!socket) {
+    socket = io(SOCKET_URL, {
+      autoConnect: false,
+      reconnection: true,
+      reconnectionAttempts: 5,
+      reconnectionDelay: 1000,
+    });
+  }
+  if (!socket.connected) {
+    socket.connect();
+  }
+  return socket;
 }
 
-const AuthContext = createContext<AuthContextType | undefined>(undefined);
-
-export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<AuthUser | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [needsUsername, setNeedsUsername] = useState(false);
-  const [tempGoogleUser, setTempGoogleUserState] = useState<AuthUser | null>(null);
-
-  const syncGoogleUserWithBackend = async (firebaseUser: FirebaseUser) => {
-    try {
-      const response = await fetch(`http://localhost:3000/google-login`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          uid: firebaseUser.uid,
-          email: firebaseUser.email,
-          displayName: firebaseUser.displayName,
-          photoURL: firebaseUser.photoURL,
-        }),
-      });
-
-      const result: { isNewUser: boolean; user: AuthUser; error?: string } = await response.json();
-
-      if (response.ok) {
-        if (result.isNewUser) {
-          setNeedsUsername(true);
-          setTempGoogleUserState(result.user);
-          setUser(null);
-        } else {
-          setUser(result.user);
-          setNeedsUsername(false);
-          setTempGoogleUserState(null);
-        }
-      } else {
-        setUser(null);
-        setNeedsUsername(false);
-        setTempGoogleUserState(null);
-      }
-    } catch (error) {
-      console.error("Error al sincronizar con backend:", error);
-      setUser(null);
-      setNeedsUsername(false);
-      setTempGoogleUserState(null);
-    }
-  };
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      try {
-        setLoading(true);
-        if (firebaseUser) {
-          await syncGoogleUserWithBackend(firebaseUser);
-        } else {
-          const localUser = localStorage.getItem("meet_clone_user");
-          if (localUser) {
-            setUser(JSON.parse(localUser) as AuthUser);
-          } else {
-            setUser(null);
-          }
-          setNeedsUsername(false);
-          setTempGoogleUserState(null);
-        }
-      } catch (error) {
-        console.error("Error al sincronizar auth con backend:", error);
-        setUser(null);
-      } finally {
-        setLoading(false);
-      }
-    });
-
-    return () => unsubscribe();
-  }, []);
-
-  const login = (userData: AuthUser) => {
-    setUser(userData);
-    localStorage.setItem("meet_clone_user", JSON.stringify(userData));
-    setNeedsUsername(false);
-    setTempGoogleUserState(null);
-  };
-
-  const logout = async () => {
-    setLoading(true);
-    try {
-      await User.logout();
-      setUser(null);
-      localStorage.removeItem("meet_clone_user");
-      setNeedsUsername(false);
-      setTempGoogleUserState(null);
-    } catch (error) {
-      console.error("Error al cerrar sesión:", error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const signInWithGoogle = async () => {
-    setLoading(true);
-    try {
-      const result = await User.googleLogin();
-      if (result.isNewUser) {
-        setNeedsUsername(true);
-        setTempGoogleUserState(result.user);
-        setUser(null);
-      } else {
-        login(result.user);
-      }
-    } catch (error) {
-      console.error("Error al ingresar con Google:", error);
-      throw error;
-    } finally {
-      setLoading(false);
-    }
-  };
-
-  const completeGoogleProfile = async (username: string) => {
-    if (!tempGoogleUser) {
-      throw new Error("No hay un usuario de Google temporal configurado");
-    }
-
-    const result = await User.googleRegisterComplete({
-      uid: tempGoogleUser.uid,
-      email: tempGoogleUser.email,
-      displayName: tempGoogleUser.displayName,
-      photoURL: tempGoogleUser.photoURL,
-      username: username,
-    });
-
-    // Guardar el usuario completo logueado
-    login(result.user);
-  };
-
-  const updateUser = async (updates: UpdateProfileData) => {
-    if (!user) throw new Error("No hay usuario autenticado");
-
-    const result = await User.updateProfile(user.uid, updates);
-    const updatedUser: AuthUser = {
-      uid: result.profile.uid,
-      email: result.profile.email,
-      displayName: `${result.profile.name} ${result.profile.surname}`,
-      photoURL: result.profile.avatar,
-      username: result.profile.username,
-    };
-    setUser(updatedUser);
-    localStorage.setItem("meet_clone_user", JSON.stringify(updatedUser));
-  };
-
-  const deleteAccount = async () => {
-    if (!user) throw new Error("No hay usuario autenticado");
-
-    await User.deleteAccount(user.uid);
-    setUser(null);
-    localStorage.removeItem("meet_clone_user");
-    setNeedsUsername(false);
-    setTempGoogleUserState(null);
-  };
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        loading,
-        needsUsername,
-        tempGoogleUser,
-        login,
-        logout,
-        signInWithGoogle,
-        completeGoogleProfile,
-        updateUser,
-        deleteAccount,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
-};
-
-export const useAuth = () => {
-  const context = useContext(AuthContext);
-  if (!context) {
-    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
+export function disconnectSocket(): void {
+  if (socket?.connected) {
+    socket.disconnect();
   }
-  return context;
-};
+}
+
+export function getSocket(): Socket | null {
+  return socket;
+}
+
+export type { Socket };
+</file>
+
+<file path=".gitignore">
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+dist
+dist-ssr
+*.local
+.env
+.env.development
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
 </file>
 
 <file path="src/pages/Home.tsx">
@@ -4090,6 +3494,1233 @@ export function Login() {
 }
 
 export default Login;
+</file>
+
+<file path="src/pages/Room.tsx">
+import React, { useEffect, useState, useRef } from "react";
+import { useParams, useNavigate } from "react-router-dom";
+import { useAuth } from "../contexts/AuthContext";
+import {
+  connectSocket,
+  disconnectSocket,
+  type Socket,
+} from "../services/socket";
+
+const configuration = {
+  iceServers: [
+    {
+      urls: ["stun:stun1.l.google.com:19302", "stun:stun2.l.google.com:19302"],
+    },
+  ],
+  iceCandidatePoolSize: 10,
+};
+
+import {
+  LuUsers,
+  LuMessageSquare,
+  LuSend,
+  LuLogOut,
+  LuLoaderCircle,
+  LuVideo,
+  LuVideoOff,
+  LuMic,
+  LuMicOff,
+  LuCopy,
+  LuCheck,
+  LuUser,
+} from "react-icons/lu";
+
+interface ChatMessage {
+  id: string;
+  senderUid: string;
+  senderUsername: string;
+  text: string;
+  createdAt: string | Date;
+}
+
+interface ActiveUser {
+  username: string;
+  uid: string;
+}
+
+interface RemoteVideoProps {
+  peerId: string;
+  stream: MediaStream;
+}
+
+const RemoteVideo: React.FC<RemoteVideoProps> = ({ peerId, stream }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    if (videoRef.current) {
+      videoRef.current.srcObject = stream;
+    }
+  }, [stream]);
+
+  return (
+    <div className="room-video-card">
+      <video
+        ref={videoRef}
+        autoPlay
+        playsInline
+        className="room-video-feed"
+      />
+      <div className="room-participant-labels">
+        <span className="participant-badge-name">Participante ({peerId.substring(0, 5)})</span>
+      </div>
+    </div>
+  );
+};
+
+const Room: React.FC = () => {
+  const localStreamRef = useRef<MediaStream | null>(null);
+  const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  const localVideoRef = useRef<HTMLVideoElement>(null);
+
+  const { roomId } = useParams<{ roomId: string }>();
+  const { user } = useAuth();
+  const navigate = useNavigate();
+
+  const [loading, setLoading] = useState(true);
+  const [isValidating, setIsValidating] = useState(true);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [roomName, setRoomName] = useState("");
+  const [hostUid, setHostUid] = useState("");
+
+  const [activeUsers, setActiveUsers] = useState<ActiveUser[]>([]);
+  const [messages, setMessages] = useState<ChatMessage[]>([]);
+  const [newMessage, setNewMessage] = useState("");
+
+  const [isVideoOn, setIsVideoOn] = useState(false);
+  const [isMicOn, setIsMicOn] = useState(false);
+  const [copied, setCopied] = useState(false);
+
+  const [localStream, setLocalStream] = useState<MediaStream | null>(null);
+  const [remoteStreams, setRemoteStreams] = useState<Map<string, MediaStream>>(new Map());
+
+  const socketRef = useRef<Socket | null>(null);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  // 1. Pedir permisos y guardar stream local con fallback robusto
+  useEffect(() => {
+    const handlePermissions = async () => {
+      let stream: MediaStream | null = null;
+      try {
+        // Intentar obtener ambos video y audio
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
+      } catch (error) {
+        console.warn("No se pudo obtener cámara y micrófono a la vez, probando solo micrófono...", error);
+        try {
+          // Intentar obtener solo audio
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: false,
+            audio: true,
+          });
+        } catch (audioError) {
+          console.warn("No se pudo obtener micrófono, probando solo cámara...", audioError);
+          try {
+            // Intentar obtener solo video
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: true,
+              audio: false,
+            });
+          } catch (videoError) {
+            console.error("No se encontraron dispositivos de audio ni video o los permisos fueron denegados:", videoError);
+          }
+        }
+      }
+
+      if (stream) {
+        localStreamRef.current = stream;
+        setLocalStream(stream);
+        // Empezar con tracks desactivados hasta que el usuario los encienda
+        stream.getVideoTracks().forEach((t) => (t.enabled = false));
+        stream.getAudioTracks().forEach((t) => (t.enabled = false));
+      }
+    };
+    handlePermissions();
+  }, []);
+
+  // 2. Asignar el stream local al elemento de video cuando este se renderice
+  useEffect(() => {
+    if (localVideoRef.current && localStream) {
+      localVideoRef.current.srcObject = localStream;
+    }
+  }, [localStream, loading, isValidating]);
+
+  // 3. Crear RTCPeerConnection para un peer remoto
+  const createPeerConnection = (remotePeerId: string): RTCPeerConnection => {
+    const pc = new RTCPeerConnection(configuration);
+
+    // Añadir tracks locales al peer connection si están disponibles
+    if (localStreamRef.current) {
+      localStreamRef.current.getTracks().forEach((track) => {
+        pc.addTrack(track, localStreamRef.current!);
+      });
+    }
+
+    // Enviar ICE candidates al peer remoto via socket
+    pc.onicecandidate = (event) => {
+      if (event.candidate && socketRef.current) {
+        socketRef.current.emit("signal", remotePeerId, socketRef.current.id, {
+          type: "candidate",
+          candidate: event.candidate,
+        });
+      }
+    };
+
+    // Cuando llega el stream remoto, agregarlo a nuestro estado de remoteStreams
+    pc.ontrack = (event) => {
+      const remoteStream = event.streams[0];
+      setRemoteStreams((prev) => {
+        const next = new Map(prev);
+        next.set(remotePeerId, remoteStream);
+        return next;
+      });
+    };
+
+    pc.oniceconnectionstatechange = () => {
+      console.log(`ICE state [${remotePeerId}]:`, pc.iceConnectionState);
+      if (
+        pc.iceConnectionState === "disconnected" ||
+        pc.iceConnectionState === "closed" ||
+        pc.iceConnectionState === "failed"
+      ) {
+        pc.close();
+        peerConnectionsRef.current.delete(remotePeerId);
+        setRemoteStreams((prev) => {
+          const next = new Map(prev);
+          next.delete(remotePeerId);
+          return next;
+        });
+      }
+    };
+
+    peerConnectionsRef.current.set(remotePeerId, pc);
+    return pc;
+  };
+
+  // 4. Conexión principal al socket, sala y control de WebRTC
+  useEffect(() => {
+    if (!roomId || !user) {
+      navigate("/dashboard");
+      return;
+    }
+
+    const socket = connectSocket();
+    socketRef.current = socket;
+
+    const handleSignal = async (
+      _to: string,
+      from: string,
+      data: RTCSessionDescriptionInit & { candidate?: RTCIceCandidateInit },
+    ) => {
+      if (from === socket.id) return; // Ignorar señales a uno mismo
+
+      let pc = peerConnectionsRef.current.get(from);
+      if (!pc) pc = createPeerConnection(from);
+
+      try {
+        if (data.type === "offer") {
+          if (pc.signalingState === "stable" || pc.signalingState === "have-remote-offer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(data));
+            const answer = await pc.createAnswer();
+            await pc.setLocalDescription(answer);
+            socket.emit("signal", from, socket.id, answer);
+          } else {
+            console.warn(`Se recibió 'offer' de ${from} pero el estado actual es ${pc.signalingState}. Ignorando.`);
+          }
+        } else if (data.type === "answer") {
+          if (pc.signalingState === "have-local-offer") {
+            await pc.setRemoteDescription(new RTCSessionDescription(data));
+          } else {
+            console.warn(`Se recibió 'answer' de ${from} pero el estado actual es ${pc.signalingState}. Ignorando.`);
+          }
+        } else if (data.candidate) {
+          if (pc.remoteDescription) {
+            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+          }
+        }
+      } catch (err) {
+        console.error(`Error en handleSignal de ${from}:`, err);
+      }
+    };
+
+    const handleNewUser = async (newPeerId: string) => {
+      if (newPeerId === socket.id) return; // Ignorar si somos nosotros mismos
+
+      const pc = createPeerConnection(newPeerId);
+      try {
+        const offer = await pc.createOffer();
+        await pc.setLocalDescription(offer);
+        socket.emit("signal", newPeerId, socket.id, offer);
+      } catch (err) {
+        console.error(`Error al crear oferta para ${newPeerId}:`, err);
+      }
+    };
+
+    const handleUserDisconnected = (peerId: string) => {
+      const pc = peerConnectionsRef.current.get(peerId);
+      if (pc) {
+        pc.close();
+        peerConnectionsRef.current.delete(peerId);
+        setRemoteStreams((prev) => {
+          const next = new Map(prev);
+          next.delete(peerId);
+          return next;
+        });
+      }
+    };
+
+    socket.on("signal", handleSignal);
+    socket.on("newUserConnected", handleNewUser);
+    socket.on("userDisconnected", handleUserDisconnected);
+
+    socket.emit("join-room", {
+      roomId,
+      username: user.username || user.displayName || "Estudiante",
+      uid: user.uid,
+    });
+
+    socket.on("delete-room", (data: { roomId: string; message: string }) => {
+      alert(data.message);
+      navigate("/dashboard");
+    });
+
+    socket.on(
+      "room-joined-success",
+      (data: {
+        roomId: string;
+        roomName: string;
+        hostUid: string;
+        activeUsers: ActiveUser[];
+      }) => {
+        setRoomName(data.roomName);
+        setHostUid(data.hostUid);
+        setActiveUsers(data.activeUsers);
+        setIsValidating(false);
+        setLoading(false);
+      },
+    );
+
+    socket.on("room-invalid", (msg: string) => {
+      setErrorMsg(msg);
+      setIsValidating(false);
+      setLoading(false);
+    });
+
+    socket.on("error-msg", (msg: string) => {
+      setErrorMsg(msg);
+    });
+
+    socket.on("room-history", (history: ChatMessage[]) => {
+      setMessages(history);
+    });
+
+    socket.on(
+      "user-joined",
+      (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
+        setActiveUsers(data.activeUsers);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            senderUid: "system",
+            senderUsername: "Sistema",
+            text: `@${data.username} se ha unido a la sala`,
+            createdAt: new Date(),
+          },
+        ]);
+      },
+    );
+
+    socket.on(
+      "user-left",
+      (data: { username: string; uid: string; activeUsers: ActiveUser[] }) => {
+        setActiveUsers(data.activeUsers);
+        setMessages((prev) => [
+          ...prev,
+          {
+            id: `sys-${Date.now()}`,
+            senderUid: "system",
+            senderUsername: "Sistema",
+            text: `@${data.username} ha salido de la sala`,
+            createdAt: new Date(),
+          },
+        ]);
+      },
+    );
+
+    socket.on("receive-message", (msg: ChatMessage) => {
+      setMessages((prev) => [...prev, msg]);
+    });
+
+    return () => {
+      // Cerrar todos los peer connections al salir
+      peerConnectionsRef.current.forEach((pc) => pc.close());
+      peerConnectionsRef.current.clear();
+      setRemoteStreams(new Map());
+
+      // Detener tracks locales
+      localStreamRef.current?.getTracks().forEach((t) => t.stop());
+      localStreamRef.current = null;
+
+      socket.off("signal", handleSignal);
+      socket.off("newUserConnected", handleNewUser);
+      socket.off("userDisconnected", handleUserDisconnected);
+      socket.off("delete-room");
+      socket.off("room-joined-success");
+      socket.off("room-invalid");
+      socket.off("error-msg");
+      socket.off("room-history");
+      socket.off("user-joined");
+      socket.off("user-left");
+      socket.off("receive-message");
+      disconnectSocket();
+    };
+  }, [roomId, user, navigate]);
+
+  // 5. Auto scroll chat
+  useEffect(() => {
+    chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  // 6. Controles reales de mic y video
+  const toggleMic = () => {
+    localStreamRef.current?.getAudioTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+    });
+    setIsMicOn((prev) => !prev);
+  };
+
+  const toggleVideo = () => {
+    localStreamRef.current?.getVideoTracks().forEach((track) => {
+      track.enabled = !track.enabled;
+    });
+    setIsVideoOn((prev) => !prev);
+  };
+
+  const handleSendMessage = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newMessage.trim() || !socketRef.current || !roomId || !user) return;
+
+    socketRef.current.emit("send-message", {
+      roomId,
+      senderUid: user.uid,
+      senderUsername: user.username || user.displayName || "Estudiante",
+      text: newMessage.trim(),
+    });
+
+    setNewMessage("");
+  };
+
+  const copyRoomId = () => {
+    if (!roomId) return;
+    navigator.clipboard.writeText(roomId);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleLeave = () => {
+    navigate("/dashboard");
+  };
+
+  if (loading || isValidating) {
+    return (
+      <div className="room-status-page">
+        <div className="auth-bg">
+          <div className="auth-blob auth-blob--1" />
+          <div className="auth-blob auth-blob--2" />
+        </div>
+        <div className="room-status-card">
+          <LuLoaderCircle className="room-spinner" size={48} />
+          <h2>Validando Sala de Estudio...</h2>
+          <p>Conectándose al servidor de tiempo real...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (errorMsg) {
+    return (
+      <div className="room-status-page">
+        <div className="auth-bg">
+          <div className="auth-blob auth-blob--1" />
+          <div className="auth-blob auth-blob--2" />
+        </div>
+        <div className="room-status-card room-status-card--error">
+          <LuVideoOff size={48} className="room-error-icon" />
+          <h2>Acceso Denegado</h2>
+          <p>{errorMsg}</p>
+          <button
+            onClick={() => navigate("/dashboard")}
+            className="room-error-btn"
+          >
+            Volver al Dashboard
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="room-page">
+      <div className="auth-bg">
+        <div className="auth-blob auth-blob--1" />
+        <div className="auth-blob auth-blob--2" />
+      </div>
+
+      <header className="room-header">
+        <div className="room-header-left">
+          <div className="room-logo">
+            <LuVideo size={20} />
+          </div>
+          <div className="room-title-wrap">
+            <h1 className="room-name-text">{roomName}</h1>
+            <div className="room-badge-row">
+              <span className="room-id-badge">ID: {roomId}</span>
+              <button
+                onClick={copyRoomId}
+                className="room-copy-btn"
+                title="Copiar ID de Sala"
+              >
+                {copied ? <LuCheck size={14} /> : <LuCopy size={14} />}
+              </button>
+            </div>
+          </div>
+        </div>
+        <div className="room-header-right">
+          <button onClick={handleLeave} className="room-leave-btn">
+            <LuLogOut size={16} />
+            <span>Salir de la Sala</span>
+          </button>
+        </div>
+      </header>
+
+      <div className="room-grid">
+        <div className="room-stage">
+          <div className="room-video-container">
+            {/* Video local */}
+            <div className="room-video-card">
+              <video
+                ref={localVideoRef}
+                autoPlay
+                muted
+                playsInline
+                className={`room-video-feed ${isVideoOn ? "" : "room-video-feed--hidden"}`}
+              />
+              {!isVideoOn && (
+                <div className="room-video-placeholder">
+                  {user?.photoURL ? (
+                    <img
+                      src={user.photoURL}
+                      alt="Tú"
+                      className="room-video-avatar"
+                    />
+                  ) : (
+                    <div className="room-video-avatar-fallback">
+                      {user?.displayName ? (
+                        user.displayName.charAt(0).toUpperCase()
+                      ) : (
+                        <LuUser size={40} />
+                      )}
+                    </div>
+                  )}
+                  <span className="room-video-name">
+                    @{user?.username || "tú"} (Tú)
+                  </span>
+                  <span className="room-status-sub">Cámara Apagada</span>
+                </div>
+              )}
+              <div className="room-participant-labels">
+                <span className="participant-badge-name">Tú</span>
+                {!isMicOn && (
+                  <span className="participant-badge-muted">Silenciado</span>
+                )}
+              </div>
+            </div>
+
+            {/* Videos remotos — uno por cada peer con stream */}
+            {Array.from(remoteStreams.entries()).map(([peerId, stream]) => (
+              <RemoteVideo key={peerId} peerId={peerId} stream={stream} />
+            ))}
+          </div>
+
+          <div className="room-controls-bar">
+            <button
+              onClick={toggleMic}
+              disabled={!localStream || localStream.getAudioTracks().length === 0}
+              className={`room-control-btn ${isMicOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
+              title={isMicOn ? "Silenciar Micrófono" : "Activar Micrófono"}
+            >
+              {isMicOn ? <LuMic size={20} /> : <LuMicOff size={20} />}
+              <span>{isMicOn ? "Mic Activo" : "Silenciado"}</span>
+            </button>
+
+            <button
+              onClick={toggleVideo}
+              disabled={!localStream || localStream.getVideoTracks().length === 0}
+              className={`room-control-btn ${isVideoOn ? "room-control-btn--active" : "room-control-btn--muted"}`}
+              title={isVideoOn ? "Apagar Cámara" : "Encender Cámara"}
+            >
+              {isVideoOn ? <LuVideo size={20} /> : <LuVideoOff size={20} />}
+              <span>{isVideoOn ? "Cámara Activa" : "Cámara Off"}</span>
+            </button>
+          </div>
+        </div>
+
+        <aside className="room-sidebar">
+          <div className="room-sidebar-section room-users-section">
+            <div className="section-header">
+              <LuUsers size={16} />
+              <h3>Participantes ({activeUsers.length})</h3>
+            </div>
+            <div className="users-list">
+              {activeUsers.map((u, i) => (
+                <div key={i} className="user-item">
+                  <div className="user-item-avatar-wrapper">
+                    <div className="user-item-avatar">
+                      {u.username.charAt(0).toUpperCase()}
+                    </div>
+                    <span className="online-indicator-dot" />
+                  </div>
+                  <div className="user-item-details">
+                    <span className="user-item-name">@{u.username}</span>
+                    {u.uid === hostUid && (
+                      <span className="user-item-badge">Anfitrión</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <div className="room-sidebar-section room-chat-section">
+            <div className="section-header">
+              <LuMessageSquare size={16} />
+              <h3>Chat de Grupo</h3>
+            </div>
+
+            <div className="chat-messages-container">
+              {messages.length === 0 ? (
+                <div className="chat-empty-state">
+                  <LuMessageSquare size={32} />
+                  <p>No hay mensajes en este chat. ¡Comienza el debate!</p>
+                </div>
+              ) : (
+                messages.map((msg) => {
+                  const isSystem = msg.senderUid === "system";
+                  const isMe = msg.senderUid === user?.uid;
+
+                  if (isSystem) {
+                    return (
+                      <div key={msg.id} className="chat-msg chat-msg--system">
+                        <span>{msg.text}</span>
+                      </div>
+                    );
+                  }
+
+                  return (
+                    <div
+                      key={msg.id}
+                      className={`chat-msg ${isMe ? "chat-msg--me" : "chat-msg--other"}`}
+                    >
+                      {!isMe && (
+                        <span className="chat-msg-username">
+                          @{msg.senderUsername}
+                        </span>
+                      )}
+                      <div className="chat-msg-bubble">
+                        <p>{msg.text}</p>
+                      </div>
+                    </div>
+                  );
+                })
+              )}
+              <div ref={chatEndRef} />
+            </div>
+
+            <form onSubmit={handleSendMessage} className="chat-input-form">
+              <input
+                type="text"
+                value={newMessage}
+                onChange={(e) => setNewMessage(e.target.value)}
+                placeholder="Escribe un mensaje..."
+                className="chat-input-field"
+                maxLength={400}
+              />
+              <button
+                type="submit"
+                disabled={!newMessage.trim()}
+                className="chat-submit-btn"
+              >
+                <LuSend size={16} />
+              </button>
+            </form>
+          </div>
+        </aside>
+      </div>
+    </div>
+  );
+};
+
+export default Room;
+</file>
+
+<file path="vite.config.ts">
+import { defineConfig } from "vite";
+import react, { reactCompilerPreset } from "@vitejs/plugin-react";
+import babel from "@rolldown/plugin-babel";
+import tailwindcss from "@tailwindcss/vite";
+import path from "path";
+// https://vite.dev/config/
+export default defineConfig({
+  plugins: [
+    react(),
+    tailwindcss(),
+    babel({ presets: [reactCompilerPreset()] }),
+  ],
+  define: {
+    global: "globalThis",
+  },
+  resolve: {
+    alias: {
+      "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  server: {
+    port: 5173,
+    proxy: {
+      "/register": "http://localhost:10000",
+      "/login": "http://localhost:10000",
+      "/google-login": { target: "http://localhost:10000", changeOrigin: true },
+      "/google-register-complete": {
+        target: "http://localhost:10000",
+        changeOrigin: true,
+      },
+      "/logout": "http://localhost:10000",
+      "/profile": "http://localhost:10000",
+      "/rooms": "http://localhost:10000",
+      "/change-room-name": "http://localhost:10000",
+      "/socket.io": {
+        target: "http://localhost:3001",
+        ws: true,
+        changeOrigin: true,
+      },
+    },
+  },
+});
+</file>
+
+<file path="src/pages/Join.tsx">
+import React, { useState, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
+import {
+  LuVideo,
+  LuArrowLeft,
+  LuDoorOpen,
+  LuLoaderCircle,
+  LuCircleAlert,
+  LuClipboardPaste,
+  LuCheck,
+  LuHash,
+  LuShieldCheck,
+  LuUsers,
+} from "react-icons/lu";
+
+const SEGMENT_LENGTHS = [3, 4, 3]; // abc-defg-hij
+const TOTAL_RAW = 10; // 3 + 4 + 3
+const PATTERN = /^[a-z0-9]{3}-[a-z0-9]{4}-[a-z0-9]{3}$/;
+
+/** Strip dashes and non-allowed chars, keep only lowercase alphanumerics */
+const sanitize = (raw: string) =>
+  raw
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "")
+    .slice(0, TOTAL_RAW);
+
+/** Insert dashes at correct positions: 3-4-3 */
+const formatId = (clean: string): string => {
+  let result = "";
+  let cursor = 0;
+  for (let i = 0; i < SEGMENT_LENGTHS.length; i++) {
+    const seg = clean.slice(cursor, cursor + SEGMENT_LENGTHS[i]);
+    if (!seg) break;
+    if (i > 0) result += "-";
+    result += seg;
+    cursor += SEGMENT_LENGTHS[i];
+  }
+  return result;
+};
+
+const Join: React.FC = () => {
+  const [rawInput, setRawInput] = useState(""); // only alphanumerics, no dashes
+  const [submitting, setSubmitting] = useState(false);
+  const [errorMsg, setErrorMsg] = useState("");
+  const [pasted, setPasted] = useState(false);
+  const [shakeError, setShakeError] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+  const navigate = useNavigate();
+
+  const formatted = formatId(rawInput);
+  const isValid = PATTERN.test(formatted);
+
+  // Segment fill progress (for visual indicators)
+  const segmentFills = (() => {
+    let cursor = 0;
+    return SEGMENT_LENGTHS.map((len) => {
+      const filled = Math.min(rawInput.length - cursor, len);
+      cursor += len;
+      return Math.max(0, filled);
+    });
+  })();
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const clean = sanitize(e.target.value);
+    setRawInput(clean);
+    setErrorMsg("");
+  };
+
+  const handlePaste = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const clean = sanitize(text);
+      if (clean.length > 0) {
+        setRawInput(clean);
+        setErrorMsg("");
+        setPasted(true);
+        setTimeout(() => setPasted(false), 2000);
+        inputRef.current?.focus();
+      }
+    } catch {
+      // Clipboard API not available or permission denied
+    }
+  };
+
+  const triggerShake = (msg: string) => {
+    setErrorMsg(msg);
+    setShakeError(true);
+    setTimeout(() => setShakeError(false), 500);
+  };
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (!rawInput) {
+      triggerShake("Ingresa el ID de la reunión");
+      return;
+    }
+
+    if (!isValid) {
+      triggerShake(
+        "Formato inválido. Debe ser 3-4-3 caracteres (ej: abc-defg-hij)"
+      );
+      return;
+    }
+
+    setSubmitting(true);
+    setTimeout(() => {
+      navigate(`/room/${formatted}`);
+    }, 800);
+  };
+
+  // Auto-focus on mount
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  return (
+    <div className="join-page">
+      {/* Background blobs */}
+      <div className="join-blob join-blob--1" />
+      <div className="join-blob join-blob--2" />
+      <div className="join-blob join-blob--3" />
+
+      <div className="join-container">
+        {/* ─── Left Panel ─── */}
+        <div className="join-panel-left">
+          <div className="join-panel-brand">
+            <div className="join-panel-logo">
+              <LuVideo size={18} />
+            </div>
+            <span className="join-panel-brand-name">MeetClone</span>
+          </div>
+
+          <div className="join-panel-content">
+            <h2 className="join-panel-heading">
+              Únete a una
+              <br />
+              reunión en
+              <br />
+              <span className="join-panel-heading-accent">segundos.</span>
+            </h2>
+            <p className="join-panel-desc">
+              Ingresa el código que te compartieron y conéctate al instante con
+              tu equipo de estudio.
+            </p>
+
+            <div className="join-panel-features">
+              {[
+                {
+                  icon: <LuHash size={14} />,
+                  text: "Códigos únicos de 10 caracteres",
+                },
+                {
+                  icon: <LuShieldCheck size={14} />,
+                  text: "Conexión segura y encriptada",
+                },
+                {
+                  icon: <LuUsers size={14} />,
+                  text: "Colaboración en tiempo real",
+                },
+              ].map((f) => (
+                <div key={f.text} className="join-panel-feature">
+                  <span className="join-panel-feature-icon">{f.icon}</span>
+                  <span>{f.text}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          <span className="join-panel-footer">© 2026 MeetClone</span>
+        </div>
+
+        {/* ─── Right Panel (form) ─── */}
+        <div className="join-panel-right">
+          <div className="join-form-header">
+            <h1 className="join-form-title">Unirse a Reunión</h1>
+            <p className="join-form-subtitle">
+              Pega o escribe el código de la sala para entrar
+            </p>
+          </div>
+
+          <div className="join-form-divider" />
+
+          {/* Error alert */}
+          {errorMsg && (
+            <div
+              className={`join-alert join-alert--error ${shakeError ? "join-shake" : ""}`}
+            >
+              <LuCircleAlert size={15} className="flex-shrink-0" />
+              <span>{errorMsg}</span>
+            </div>
+          )}
+
+          <form onSubmit={handleSubmit} className="join-form" noValidate>
+            {/* Label */}
+            <div className="join-input-group">
+              <label htmlFor="meetingId" className="join-label">
+                Código de la reunión
+              </label>
+
+              {/* Input with paste button */}
+              <div className="join-input-row">
+                <div className="join-input-wrapper">
+                  <LuHash
+                    size={15}
+                    className="join-input-icon"
+                  />
+                  <input
+                    ref={inputRef}
+                    type="text"
+                    id="meetingId"
+                    value={formatted}
+                    onChange={handleChange}
+                    placeholder="abc-defg-hij"
+                    className={`join-input ${errorMsg ? "join-input--error" : ""} ${isValid ? "join-input--valid" : ""}`}
+                    maxLength={12}
+                    disabled={submitting}
+                    autoComplete="off"
+                    spellCheck={false}
+                  />
+                  {isValid && (
+                    <LuCheck size={16} className="join-input-check" />
+                  )}
+                </div>
+                <button
+                  type="button"
+                  onClick={handlePaste}
+                  className="join-paste-btn"
+                  title="Pegar del portapapeles"
+                  disabled={submitting}
+                >
+                  {pasted ? <LuCheck size={16} /> : <LuClipboardPaste size={16} />}
+                  <span className="join-paste-label">
+                    {pasted ? "Pegado" : "Pegar"}
+                  </span>
+                </button>
+              </div>
+
+              {/* Segment progress indicator */}
+              <div className="join-segments">
+                {SEGMENT_LENGTHS.map((len, i) => (
+                  <React.Fragment key={i}>
+                    {i > 0 && <span className="join-segment-dash">-</span>}
+                    <div className="join-segment">
+                      <div
+                        className="join-segment-fill"
+                        style={{
+                          width: `${(segmentFills[i] / len) * 100}%`,
+                        }}
+                      />
+                      <span className="join-segment-text">
+                        {segmentFills[i]}/{len}
+                      </span>
+                    </div>
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
+
+            {/* Submit button */}
+            <button
+              type="submit"
+              disabled={submitting || !rawInput}
+              className="join-submit-btn"
+            >
+              {submitting ? (
+                <>
+                  <LuLoaderCircle className="join-spinner" size={17} />
+                  Accediendo a la sala…
+                </>
+              ) : (
+                <>
+                  <LuDoorOpen size={17} />
+                  Unirse a la Reunión
+                </>
+              )}
+            </button>
+          </form>
+
+          <div className="join-form-divider" />
+
+          {/* Back link */}
+          <button
+            onClick={() => navigate("/home")}
+            disabled={submitting}
+            className="join-back-btn"
+          >
+            <LuArrowLeft size={14} />
+            <span>Volver al Inicio</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+export default Join;
+</file>
+
+<file path="src/contexts/AuthContext.tsx">
+import React, { createContext, useContext, useEffect, useState } from "react";
+import { onAuthStateChanged, type User as FirebaseUser } from "firebase/auth";
+import { auth } from "../services/firebase";
+import { User, API_URL } from "../services/auth";
+import type { AuthUser, UpdateProfileData } from "../services/auth";
+
+interface AuthContextType {
+  user: AuthUser | null;
+  loading: boolean;
+  needsUsername: boolean;
+  tempGoogleUser: AuthUser | null;
+  login: (userData: AuthUser) => void;
+  logout: () => Promise<void>;
+  signInWithGoogle: () => Promise<void>;
+  completeGoogleProfile: (username: string) => Promise<void>;
+  updateUser: (updates: UpdateProfileData) => Promise<void>;
+  deleteAccount: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextType | undefined>(undefined);
+
+export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [user, setUser] = useState<AuthUser | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [needsUsername, setNeedsUsername] = useState(false);
+  const [tempGoogleUser, setTempGoogleUserState] = useState<AuthUser | null>(null);
+
+  const syncGoogleUserWithBackend = async (firebaseUser: FirebaseUser) => {
+    try {
+      const response = await fetch(
+        `${API_URL}/google-login`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            uid: firebaseUser.uid,
+            email: firebaseUser.email,
+            displayName: firebaseUser.displayName,
+            photoURL: firebaseUser.photoURL,
+          }),
+        },
+      );
+
+      const result: { isNewUser: boolean; user: AuthUser; error?: string } = await response.json();
+
+      if (response.ok) {
+        if (result.isNewUser) {
+          setNeedsUsername(true);
+          setTempGoogleUserState(result.user);
+          setUser(null);
+        } else {
+          setUser(result.user);
+          setNeedsUsername(false);
+          setTempGoogleUserState(null);
+        }
+      } else {
+        setUser(null);
+        setNeedsUsername(false);
+        setTempGoogleUserState(null);
+      }
+    } catch (error) {
+      console.error("Error al sincronizar con backend:", error);
+      setUser(null);
+      setNeedsUsername(false);
+      setTempGoogleUserState(null);
+    }
+  };
+
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+      try {
+        setLoading(true);
+        if (firebaseUser) {
+          await syncGoogleUserWithBackend(firebaseUser);
+        } else {
+          const localUser = localStorage.getItem("meet_clone_user");
+          if (localUser) {
+            setUser(JSON.parse(localUser) as AuthUser);
+          } else {
+            setUser(null);
+          }
+          setNeedsUsername(false);
+          setTempGoogleUserState(null);
+        }
+      } catch (error) {
+        console.error("Error al sincronizar auth con backend:", error);
+        setUser(null);
+      } finally {
+        setLoading(false);
+      }
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  const login = (userData: AuthUser) => {
+    setUser(userData);
+    localStorage.setItem("meet_clone_user", JSON.stringify(userData));
+    setNeedsUsername(false);
+    setTempGoogleUserState(null);
+  };
+
+  const logout = async () => {
+    setLoading(true);
+    try {
+      await User.logout();
+      setUser(null);
+      localStorage.removeItem("meet_clone_user");
+      setNeedsUsername(false);
+      setTempGoogleUserState(null);
+    } catch (error) {
+      console.error("Error al cerrar sesión:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const signInWithGoogle = async () => {
+    setLoading(true);
+    try {
+      const result = await User.googleLogin();
+      if (result.isNewUser) {
+        setNeedsUsername(true);
+        setTempGoogleUserState(result.user);
+        setUser(null);
+      } else {
+        login(result.user);
+      }
+    } catch (error) {
+      console.error("Error al ingresar con Google:", error);
+      throw error;
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const completeGoogleProfile = async (username: string) => {
+    if (!tempGoogleUser) {
+      throw new Error("No hay un usuario de Google temporal configurado");
+    }
+
+    const result = await User.googleRegisterComplete({
+      uid: tempGoogleUser.uid,
+      email: tempGoogleUser.email,
+      displayName: tempGoogleUser.displayName,
+      photoURL: tempGoogleUser.photoURL,
+      username: username,
+    });
+
+    // Guardar el usuario completo logueado
+    login(result.user);
+  };
+
+  const updateUser = async (updates: UpdateProfileData) => {
+    if (!user) throw new Error("No hay usuario autenticado");
+
+    const result = await User.updateProfile(user.uid, updates);
+    const updatedUser: AuthUser = {
+      uid: result.profile.uid,
+      email: result.profile.email,
+      displayName: `${result.profile.name} ${result.profile.surname}`,
+      photoURL: result.profile.avatar,
+      username: result.profile.username,
+    };
+    setUser(updatedUser);
+    localStorage.setItem("meet_clone_user", JSON.stringify(updatedUser));
+  };
+
+  const deleteAccount = async () => {
+    if (!user) throw new Error("No hay usuario autenticado");
+
+    await User.deleteAccount(user.uid);
+    setUser(null);
+    localStorage.removeItem("meet_clone_user");
+    setNeedsUsername(false);
+    setTempGoogleUserState(null);
+  };
+
+  return (
+    <AuthContext.Provider
+      value={{
+        user,
+        loading,
+        needsUsername,
+        tempGoogleUser,
+        login,
+        logout,
+        signInWithGoogle,
+        completeGoogleProfile,
+        updateUser,
+        deleteAccount,
+      }}
+    >
+      {children}
+    </AuthContext.Provider>
+  );
+};
+
+export const useAuth = () => {
+  const context = useContext(AuthContext);
+  if (!context) {
+    throw new Error("useAuth debe ser usado dentro de un AuthProvider");
+  }
+  return context;
+};
 </file>
 
 <file path="src/index.css">
@@ -5488,6 +6119,176 @@ export default Login;
   cursor: not-allowed;
 }
 
+
+/* ═══════════════════════════════════════════════
+   DASHBOARD — Edición inline de nombre de sala
+   Pegar al final de index.css
+   ═══════════════════════════════════════════════ */
+
+/* Card en modo edición activo: borde azul + glow */
+.dashboard-room-card--editing {
+  border-color: rgba(99, 102, 241, 0.5) !important;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12),
+              0 8px 32px rgba(99, 102, 241, 0.15) !important;
+  transform: translateY(-3px);
+}
+
+/* Botón "Editar" visible en modo lectura */
+.dashboard-room-edit-btn {
+  margin-left: auto;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+  background: none;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 5px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all 0.2s;
+}
+.dashboard-room-edit-btn:hover {
+  background: rgba(255, 255, 255, 0.07);
+  color: rgba(255, 255, 255, 0.85);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Formulario inline dentro del header */
+.dashboard-room-edit-form {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-room-edit-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex: 1;
+  min-width: 0;
+}
+
+.dashboard-room-edit-input {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  font-size: 1rem;
+  font-weight: 700;
+  padding: 0 12px;
+  background: rgba(255, 255, 255, 0.06);
+  border: 1.5px solid rgba(99, 102, 241, 0.7);
+  border-radius: 10px;
+  color: white;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.18),
+              0 0 16px rgba(99, 102, 241, 0.15);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+.dashboard-room-edit-input:focus {
+  border-color: rgba(99, 102, 241, 1);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.28),
+              0 0 20px rgba(99, 102, 241, 0.2);
+}
+.dashboard-room-edit-input::placeholder {
+  color: rgba(255, 255, 255, 0.25);
+  font-weight: 400;
+}
+
+.dashboard-room-edit-counter {
+  font-size: 0.65rem;
+  color: rgba(255, 255, 255, 0.3);
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* Botones confirmar / cancelar */
+.dashboard-room-edit-actions {
+  display: flex;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.dashboard-room-edit-confirm,
+.dashboard-room-edit-cancel {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: opacity 0.15s, transform 0.15s;
+  flex-shrink: 0;
+}
+
+.dashboard-room-edit-confirm {
+  background: rgba(16, 185, 129, 0.2);
+  border: 1px solid rgba(16, 185, 129, 0.35);
+  color: #6ee7b7;
+}
+.dashboard-room-edit-confirm:not(:disabled):hover {
+  background: rgba(16, 185, 129, 0.3);
+  transform: scale(1.08);
+}
+.dashboard-room-edit-confirm:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+}
+
+.dashboard-room-edit-cancel {
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.45);
+}
+.dashboard-room-edit-cancel:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: rgba(255, 255, 255, 0.8);
+  transform: scale(1.08);
+}
+
+/* Fila de acciones del card */
+.dashboard-room-actions {
+  display: flex;
+  gap: 8px;
+}
+
+/* Botón eliminar — solo ícono, compacto */
+.dashboard-room-delete-btn {
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(239, 68, 68, 0.08);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+  border-radius: 12px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.dashboard-room-delete-btn:hover {
+  background: rgba(239, 68, 68, 0.18);
+  color: #fecaca;
+  transform: translateY(-1px);
+}
+
+/* Deshabilitado mientras se edita el nombre */
+.dashboard-room-delete-btn:disabled,
+.dashboard-room-enter:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  transform: none !important;
+  box-shadow: none !important;
+}
+
 @media (max-width: 992px) {
   .room-grid {
     grid-template-columns: 1fr;
@@ -5528,6 +6329,578 @@ export default Login;
     padding: 10px;
   }
 }
+
+/* ═══════════════════════════════════════════════
+   JOIN PAGE — Premium Split-Panel
+   ═══════════════════════════════════════════════ */
+
+.join-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  position: relative;
+  overflow: hidden;
+  background: #0a0a0f;
+}
+
+/* ── Animated background blobs ── */
+.join-blob {
+  position: absolute;
+  border-radius: 50%;
+  filter: blur(90px);
+  pointer-events: none;
+  opacity: 0.18;
+}
+
+.join-blob--1 {
+  width: 520px;
+  height: 520px;
+  background: radial-gradient(circle, #6366f1 0%, transparent 70%);
+  top: -15%;
+  left: -10%;
+  animation: join-float-1 20s ease-in-out infinite alternate;
+}
+
+.join-blob--2 {
+  width: 400px;
+  height: 400px;
+  background: radial-gradient(circle, #8b5cf6 0%, transparent 70%);
+  bottom: -12%;
+  right: -8%;
+  animation: join-float-2 16s ease-in-out infinite alternate;
+}
+
+.join-blob--3 {
+  width: 300px;
+  height: 300px;
+  background: radial-gradient(circle, #06b6d4 0%, transparent 70%);
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  animation: join-float-3 18s ease-in-out infinite alternate;
+  opacity: 0.1;
+}
+
+@keyframes join-float-1 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(60px, 40px) scale(1.1); }
+}
+@keyframes join-float-2 {
+  0%   { transform: translate(0, 0) scale(1); }
+  100% { transform: translate(-50px, -30px) scale(1.08); }
+}
+@keyframes join-float-3 {
+  0%   { transform: translate(-50%, -50%) scale(1); }
+  100% { transform: translate(calc(-50% + 30px), calc(-50% - 20px)) scale(1.15); }
+}
+
+/* ── Main container (split layout) ── */
+.join-container {
+  position: relative;
+  z-index: 10;
+  width: 100%;
+  max-width: 900px;
+  display: flex;
+  border-radius: 20px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.07);
+  box-shadow: 0 24px 64px rgba(0, 0, 0, 0.5),
+              0 0 80px rgba(99, 102, 241, 0.08);
+  animation: join-slide-up 0.6s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes join-slide-up {
+  from { opacity: 0; transform: translateY(30px) scale(0.98); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+/* ── LEFT PANEL ── */
+.join-panel-left {
+  flex: 1;
+  background: linear-gradient(135deg, #1e1b4b, #1a103d, #0f172a);
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Subtle inner glow */
+.join-panel-left::before {
+  content: '';
+  position: absolute;
+  top: -50%;
+  right: -50%;
+  width: 100%;
+  height: 100%;
+  background: radial-gradient(circle, rgba(124, 58, 237, 0.12) 0%, transparent 60%);
+  pointer-events: none;
+}
+
+.join-panel-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  position: relative;
+  z-index: 1;
+}
+
+.join-panel-logo {
+  width: 36px;
+  height: 36px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.2);
+  border: 1px solid rgba(139, 92, 246, 0.3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+}
+
+.join-panel-brand-name {
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: white;
+  letter-spacing: -0.02em;
+}
+
+.join-panel-content {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  position: relative;
+  z-index: 1;
+}
+
+.join-panel-heading {
+  font-size: 1.85rem;
+  font-weight: 800;
+  line-height: 1.2;
+  letter-spacing: -0.03em;
+  color: white;
+  margin: 0;
+}
+
+.join-panel-heading-accent {
+  background: linear-gradient(135deg, #a78bfa, #60a5fa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.join-panel-desc {
+  font-size: 0.88rem;
+  color: rgba(255, 255, 255, 0.4);
+  line-height: 1.6;
+  max-width: 280px;
+  margin: 0;
+}
+
+.join-panel-features {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 4px;
+}
+
+.join-panel-feature {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 0.82rem;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.join-panel-feature-icon {
+  width: 26px;
+  height: 26px;
+  border-radius: 7px;
+  background: rgba(139, 92, 246, 0.12);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #a78bfa;
+  flex-shrink: 0;
+}
+
+.join-panel-footer {
+  font-size: 0.7rem;
+  color: rgba(255, 255, 255, 0.15);
+  position: relative;
+  z-index: 1;
+}
+
+/* ── RIGHT PANEL ── */
+.join-panel-right {
+  width: 420px;
+  background: #111118;
+  padding: 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 20px;
+}
+
+.join-form-header {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.join-form-title {
+  font-size: 1.55rem;
+  font-weight: 800;
+  color: white;
+  letter-spacing: -0.03em;
+  margin: 0;
+}
+
+.join-form-subtitle {
+  font-size: 0.85rem;
+  color: rgba(255, 255, 255, 0.35);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.join-form-divider {
+  height: 1px;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+/* ── Alert ── */
+.join-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.82rem;
+  font-weight: 500;
+  padding: 10px 14px;
+  border-radius: 12px;
+  animation: join-alert-in 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.join-alert--error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  color: #fca5a5;
+}
+
+@keyframes join-alert-in {
+  from { opacity: 0; transform: translateY(-6px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.join-shake {
+  animation: join-shake-anim 0.4s ease-in-out;
+}
+
+@keyframes join-shake-anim {
+  0%, 100% { transform: translateX(0); }
+  20%      { transform: translateX(-6px); }
+  40%      { transform: translateX(6px); }
+  60%      { transform: translateX(-4px); }
+  80%      { transform: translateX(4px); }
+}
+
+/* ── Form ── */
+.join-form {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.join-input-group {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.join-label {
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-weight: 600;
+  color: rgba(255, 255, 255, 0.45);
+}
+
+.join-input-row {
+  display: flex;
+  gap: 8px;
+}
+
+.join-input-wrapper {
+  position: relative;
+  flex: 1;
+}
+
+.join-input-icon {
+  position: absolute;
+  left: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: rgba(255, 255, 255, 0.2);
+  pointer-events: none;
+  transition: color 0.2s;
+}
+
+.join-input {
+  width: 100%;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  padding: 12px 40px 12px 38px;
+  color: white;
+  font-size: 1.05rem;
+  font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', monospace;
+  font-weight: 600;
+  letter-spacing: 0.12em;
+  text-align: center;
+  outline: none;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-sizing: border-box;
+}
+
+.join-input::placeholder {
+  color: rgba(255, 255, 255, 0.18);
+  font-weight: 400;
+  letter-spacing: 0.15em;
+}
+
+.join-input:focus {
+  border-color: rgba(139, 92, 246, 0.5);
+  background: rgba(139, 92, 246, 0.05);
+  box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.12),
+              0 0 20px rgba(139, 92, 246, 0.08);
+}
+
+.join-input--error {
+  border-color: rgba(239, 68, 68, 0.5) !important;
+  box-shadow: 0 0 0 2px rgba(239, 68, 68, 0.15) !important;
+}
+
+.join-input--valid {
+  border-color: rgba(16, 185, 129, 0.45) !important;
+  box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1) !important;
+}
+
+.join-input--valid:focus {
+  border-color: rgba(16, 185, 129, 0.6) !important;
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.15),
+              0 0 16px rgba(16, 185, 129, 0.1) !important;
+}
+
+.join-input-check {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #34d399;
+  pointer-events: none;
+  animation: join-check-pop 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+@keyframes join-check-pop {
+  from { opacity: 0; transform: translateY(-50%) scale(0.5); }
+  to   { opacity: 1; transform: translateY(-50%) scale(1); }
+}
+
+/* ── Paste button ── */
+.join-paste-btn {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 0.78rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.join-paste-btn:hover:not(:disabled) {
+  background: rgba(139, 92, 246, 0.1);
+  border-color: rgba(139, 92, 246, 0.3);
+  color: #c4b5fd;
+}
+
+.join-paste-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+/* ── Segment progress indicators ── */
+.join-segments {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 2px;
+}
+
+.join-segment-dash {
+  font-size: 0.75rem;
+  color: rgba(255, 255, 255, 0.15);
+  font-weight: 700;
+}
+
+.join-segment {
+  flex: 1;
+  height: 4px;
+  background: rgba(255, 255, 255, 0.06);
+  border-radius: 99px;
+  position: relative;
+  overflow: hidden;
+}
+
+.join-segment-fill {
+  position: absolute;
+  top: 0;
+  left: 0;
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, #7c3aed, #6366f1);
+  transition: width 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.join-segment-text {
+  position: absolute;
+  top: 8px;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 0.6rem;
+  color: rgba(255, 255, 255, 0.2);
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+/* ── Submit button ── */
+.join-submit-btn {
+  width: 100%;
+  padding: 13px 20px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, #7c3aed, #6366f1);
+  color: white;
+  font-size: 0.9rem;
+  font-weight: 650;
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 4px 20px rgba(99, 102, 241, 0.25);
+  margin-top: 4px;
+}
+
+.join-submit-btn:hover:not(:disabled) {
+  opacity: 0.92;
+  transform: translateY(-1px);
+  box-shadow: 0 8px 28px rgba(99, 102, 241, 0.35);
+}
+
+.join-submit-btn:active:not(:disabled) {
+  transform: translateY(0.5px);
+}
+
+.join-submit-btn:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.join-spinner {
+  animation: spin 1s linear infinite;
+}
+
+/* ── Back button ── */
+.join-back-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.3);
+  background: none;
+  border: none;
+  cursor: pointer;
+  transition: color 0.2s;
+  padding: 4px 0;
+}
+
+.join-back-btn:hover:not(:disabled) {
+  color: rgba(255, 255, 255, 0.7);
+}
+
+.join-back-btn:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+/* ── Responsive ── */
+@media (max-width: 768px) {
+  .join-page {
+    padding: 0;
+  }
+
+  .join-container {
+    flex-direction: column;
+    border-radius: 0;
+    border: none;
+    min-height: 100vh;
+    box-shadow: none;
+  }
+
+  .join-panel-left {
+    padding: 28px 24px;
+    gap: 16px;
+  }
+
+  .join-panel-heading {
+    font-size: 1.4rem;
+  }
+
+  .join-panel-desc {
+    font-size: 0.82rem;
+  }
+
+  .join-panel-features {
+    display: none;
+  }
+
+  .join-panel-footer {
+    display: none;
+  }
+
+  .join-panel-right {
+    width: 100%;
+    padding: 28px 24px;
+    flex: 1;
+  }
+
+  .join-form-title {
+    font-size: 1.3rem;
+  }
+
+  .join-paste-label {
+    display: none;
+  }
+
+  .join-paste-btn {
+    padding: 10px;
+  }
+}
 </file>
 
 <file path="src/main.tsx">
@@ -5547,6 +6920,7 @@ import Room from "./pages/Room.tsx";
 import ChooseUsername from "./pages/ChooseUsername.tsx";
 import { AuthProvider } from "./contexts/AuthContext.tsx";
 import { ProtectedRoute, PublicRoute, UsernameRequiredRoute } from "./components/AuthRoutes.tsx";
+
 
 const router = createBrowserRouter([
   // Rutas públicas (solo accesibles si NO estás autenticado)
@@ -5605,6 +6979,8 @@ const router = createBrowserRouter([
   },
 ]);
 
+
+
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
     <AuthProvider>
@@ -5614,11 +6990,72 @@ createRoot(document.getElementById("root")!).render(
 );
 </file>
 
+<file path="package.json">
+{
+  "name": "mp2frontend",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc -b && vite build",
+    "lint": "eslint .",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@fontsource-variable/geist": "^5.2.9",
+    "@tailwindcss/vite": "^4.3.0",
+    "buffer": "^6.0.3",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "firebase": "^12.13.0",
+    "lucide-react": "^1.16.0",
+    "process": "^0.11.10",
+    "radix-ui": "^1.4.3",
+    "react": "^19.2.6",
+    "react-dom": "^19.2.6",
+    "react-icons": "^5.6.0",
+    "react-router": "^7.15.1",
+    "react-router-dom": "^7.15.1",
+    "shadcn": "^4.8.0",
+    "simple-peer": "^9.11.1",
+    "socket.io-client": "^4.8.3",
+    "tailwind-merge": "^3.6.0",
+    "tailwindcss": "^4.3.0",
+    "tw-animate-css": "^1.4.0"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.29.0",
+    "@eslint/js": "^10.0.1",
+    "@rolldown/plugin-babel": "^0.2.3",
+    "@types/babel__core": "^7.20.5",
+    "@types/node": "^24.12.4",
+    "@types/react": "^19.2.14",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.1",
+    "babel-plugin-react-compiler": "^1.0.0",
+    "eslint": "^10.3.0",
+    "eslint-plugin-react-hooks": "^7.1.1",
+    "eslint-plugin-react-refresh": "^0.5.2",
+    "globals": "^17.6.0",
+    "typescript": "~6.0.2",
+    "typescript-eslint": "^8.59.2",
+    "vite": "^8.0.12"
+  }
+}
+</file>
+
 <file path="src/services/auth.ts">
-import { GoogleAuthProvider, signInWithPopup, signOut, deleteUser as deleteFirebaseAuthUser } from "firebase/auth";
+import {
+  GoogleAuthProvider,
+  signInWithPopup,
+  signOut,
+  deleteUser as deleteFirebaseAuthUser,
+} from "firebase/auth";
 import { auth } from "./firebase";
 
-const API_URL = "http://localhost:3000";
+export const API_URL =
+  import.meta.env.VITE_API_URL ?? "https://mp2backend.onrender.com";
 const provider = new GoogleAuthProvider();
 
 export interface AuthUser {
@@ -5728,16 +7165,21 @@ class ApiError extends Error {
 async function handleResponse<T>(response: Response): Promise<T> {
   const contentType = response.headers.get("content-type");
   let result: any;
-  
+
   if (contentType && contentType.includes("application/json")) {
     result = await response.json();
   } else {
     const text = await response.text();
-    result = { error: text || `Error de servidor (Estado: ${response.status})` };
+    result = {
+      error: text || `Error de servidor (Estado: ${response.status})`,
+    };
   }
 
   if (!response.ok) {
-    throw new ApiError(result.error || "Error en la solicitud", response.status);
+    throw new ApiError(
+      result.error || "Error en la solicitud",
+      response.status,
+    );
   }
 
   return result as T;
@@ -5753,7 +7195,9 @@ async function request<T>(url: string, body: object): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -5766,7 +7210,9 @@ async function requestGet<T>(url: string): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -5780,7 +7226,9 @@ async function requestPut<T>(url: string, body: object): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -5793,7 +7241,9 @@ async function requestDelete<T>(url: string): Promise<T> {
     return await handleResponse<T>(response);
   } catch (error) {
     if (error instanceof ApiError) throw error;
-    throw new Error(`No se pudo conectar con el servidor backend en http://localhost:3000. Por favor, asegúrate de que el backend esté corriendo.`);
+    throw new Error(
+      `No se pudo conectar con el servidor backend en ${API_URL}. Por favor, asegúrate de que el backend esté corriendo.`,
+    );
   }
 }
 
@@ -5804,6 +7254,15 @@ export class User {
 
   static async login(data: LoginData): Promise<AuthResponse> {
     return request<AuthResponse>(`${API_URL}/login`, data);
+  }
+
+  static async updateRoomName(data: {
+    name: string;
+    newName: string;
+    hostUid: string;
+    roomId: string;
+  }): Promise<{ message: string }> {
+    return request<{ message: string }>(`${API_URL}/change-room-name`, data);
   }
 
   static async googleLogin(): Promise<GoogleAuthResponse> {
@@ -5834,13 +7293,18 @@ export class User {
     return requestGet<ProfileResponse>(`${API_URL}/profile/${uid}`);
   }
 
-  static async updateProfile(uid: string, data: UpdateProfileData): Promise<ProfileResponse> {
+  static async updateProfile(
+    uid: string,
+    data: UpdateProfileData,
+  ): Promise<ProfileResponse> {
     return requestPut<ProfileResponse>(`${API_URL}/profile/${uid}`, data);
   }
 
   // US-05: Delete Account
   static async deleteAccount(uid: string): Promise<{ message: string }> {
-    const result = await requestDelete<{ message: string }>(`${API_URL}/profile/${uid}`);
+    const result = await requestDelete<{ message: string }>(
+      `${API_URL}/profile/${uid}`,
+    );
     // Also delete from Firebase Auth on client side
     const currentUser = auth.currentUser;
     if (currentUser) {
@@ -5856,64 +7320,16 @@ export class User {
   }
 
   // US-06: Rooms
-  static async createRoom(data: { name: string; hostUid: string; hostUsername: string }): Promise<RoomResponse> {
+  static async createRoom(data: {
+    name: string;
+    hostUid: string;
+    hostUsername: string;
+  }): Promise<RoomResponse> {
     return request<RoomResponse>(`${API_URL}/rooms`, data);
   }
 
   static async getRooms(uid: string): Promise<RoomsListResponse> {
     return requestGet<RoomsListResponse>(`${API_URL}/rooms/${uid}`);
-  }
-}
-</file>
-
-<file path="package.json">
-{
-  "name": "mp2frontend",
-  "private": true,
-  "version": "0.0.0",
-  "type": "module",
-  "scripts": {
-    "dev": "vite",
-    "build": "tsc -b && vite build",
-    "lint": "eslint .",
-    "preview": "vite preview"
-  },
-  "dependencies": {
-    "@fontsource-variable/geist": "^5.2.9",
-    "@tailwindcss/vite": "^4.3.0",
-    "class-variance-authority": "^0.7.1",
-    "clsx": "^2.1.1",
-    "firebase": "^12.13.0",
-    "lucide-react": "^1.16.0",
-    "radix-ui": "^1.4.3",
-    "react": "^19.2.6",
-    "react-dom": "^19.2.6",
-    "react-icons": "^5.6.0",
-    "react-router": "^7.15.1",
-    "react-router-dom": "^7.15.1",
-    "shadcn": "^4.8.0",
-    "socket.io-client": "^4.8.3",
-    "tailwind-merge": "^3.6.0",
-    "tailwindcss": "^4.3.0",
-    "tw-animate-css": "^1.4.0"
-  },
-  "devDependencies": {
-    "@babel/core": "^7.29.0",
-    "@eslint/js": "^10.0.1",
-    "@rolldown/plugin-babel": "^0.2.3",
-    "@types/babel__core": "^7.20.5",
-    "@types/node": "^24.12.4",
-    "@types/react": "^19.2.14",
-    "@types/react-dom": "^19.2.3",
-    "@vitejs/plugin-react": "^6.0.1",
-    "babel-plugin-react-compiler": "^1.0.0",
-    "eslint": "^10.3.0",
-    "eslint-plugin-react-hooks": "^7.1.1",
-    "eslint-plugin-react-refresh": "^0.5.2",
-    "globals": "^17.6.0",
-    "typescript": "~6.0.2",
-    "typescript-eslint": "^8.59.2",
-    "vite": "^8.0.12"
   }
 }
 </file>
