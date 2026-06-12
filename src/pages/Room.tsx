@@ -19,6 +19,9 @@ import {
   LuCopy,
   LuCheck,
   LuUser,
+  LuShieldAlert,
+  LuWifi,
+  LuX,
 } from "react-icons/lu";
 
 // ─── Configuración WebRTC ─────────────────────────────────────────────────────
@@ -207,6 +210,15 @@ const Room: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
+  // ── Estado de permisos de media ────────────────────────────────────────────
+  const [mediaPerms, setMediaPerms] = useState<{
+    video: "pending" | "granted" | "denied";
+    audio: "pending" | "granted" | "denied";
+  }>({ video: "pending", audio: "pending" });
+  const [toasts, setToasts] = useState<
+    { id: string; type: "success" | "error" | "warning" | "info"; message: string }[]
+  >([]);
+
   // UN solo map que agrupa todo el estado remoto por peerId
   const [remotes, setRemotes] = useState<Map<string, RemoteState>>(new Map());
 
@@ -244,7 +256,7 @@ const Room: React.FC = () => {
       const socket = socketRef.current;
       if (!socket) return;
       peerConnectionsRef.current.forEach((_, peerId) => {
-        socket.emit("signal", peerId, socket.id, {
+        socket.emit("signal", peerId, mySocketIdRef.current, {
           type: "media-state",
           isVideoOn: videoOn,
           isMicOn: micOn,
@@ -254,38 +266,105 @@ const Room: React.FC = () => {
     [],
   );
 
-  // ── 1. Obtener media ──────────────────────────────────────────────────────
+  // ── Helper para toasts ──────────────────────────────────────────────────────
+  const addToast = useCallback(
+    (type: "success" | "error" | "warning" | "info", message: string) => {
+      const id = `toast-${Date.now()}-${Math.random()}`;
+      setToasts((prev) => [...prev, { id, type, message }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 5000);
+    },
+    [],
+  );
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // ── 1. Obtener media con feedback de permisos ─────────────────────────────
   useEffect(() => {
     let mounted = true;
     const tryGetMedia = async () => {
-      const attempts = [
-        { video: true, audio: true },
-        { video: false, audio: true },
-        { video: true, audio: false },
-      ];
+      let hasVideo = false;
+      let hasAudio = false;
       let stream: MediaStream | null = null;
-      for (const c of attempts) {
-        try {
-          stream = await navigator.mediaDevices.getUserMedia(c);
-          break;
-        } catch {
-          /* siguiente intento */
+
+      // Intento 1: video + audio
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        hasVideo = true;
+        hasAudio = true;
+      } catch (err: any) {
+        const name = err?.name || "";
+        // Si fue denegado explícitamente, intentar por separado
+        if (name === "NotAllowedError" || name === "PermissionDeniedError") {
+          // Intentar solo audio
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+            hasAudio = true;
+          } catch {
+            /* sin audio */
+          }
+          // Intentar solo video si no tenemos stream
+          if (!stream) {
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+              hasVideo = true;
+            } catch {
+              /* sin video */
+            }
+          }
+        } else {
+          // Otro error (NotFoundError, etc) — intentar parciales
+          try {
+            stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+            hasAudio = true;
+          } catch { /* */ }
+          if (!stream) {
+            try {
+              stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+              hasVideo = true;
+            } catch { /* */ }
+          }
         }
       }
+
       if (!mounted) {
         stream?.getTracks().forEach((t) => t.stop());
         return;
       }
+
+      // Detectar tracks reales obtenidos
       if (stream) {
+        if (stream.getVideoTracks().length > 0) hasVideo = true;
+        if (stream.getAudioTracks().length > 0) hasAudio = true;
         stream.getTracks().forEach((t) => (t.enabled = false));
         localStreamRef.current = stream;
         setLocalStream(stream);
+      }
+
+      // Actualizar permisos y mostrar toasts
+      setMediaPerms({
+        video: hasVideo ? "granted" : "denied",
+        audio: hasAudio ? "granted" : "denied",
+      });
+
+      if (hasVideo && hasAudio) {
+        addToast("success", "Cámara y micrófono conectados correctamente");
+      } else if (hasVideo && !hasAudio) {
+        addToast("warning", "Cámara conectada · Micrófono denegado o no disponible");
+      } else if (!hasVideo && hasAudio) {
+        addToast("warning", "Micrófono conectado · Cámara denegada o no disponible");
+      } else {
+        addToast("error", "No se pudo acceder a cámara ni micrófono. Revisa los permisos del navegador.");
       }
     };
     tryGetMedia();
     return () => {
       mounted = false;
     };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // ── 2. Vincular stream local al <video> ───────────────────────────────────
@@ -317,7 +396,7 @@ const Room: React.FC = () => {
       // ICE candidates
       pc.onicecandidate = ({ candidate }) => {
         if (candidate && socketRef.current) {
-          socketRef.current.emit("signal", remotePeerId, socketRef.current.id, {
+          socketRef.current.emit("signal", remotePeerId, mySocketIdRef.current, {
             type: "candidate",
             candidate,
           });
@@ -360,7 +439,7 @@ const Room: React.FC = () => {
 
     // ── Señalización ──────────────────────────────────────────────────────
     const onSignal = async (_to: string, from: string, data: any) => {
-      if (from === socket.id) return;
+      if (from === mySocketIdRef.current) return;
 
       // Mensaje de estado de media (no es WebRTC estándar)
       if (data.type === "media-state") {
@@ -389,9 +468,9 @@ const Room: React.FC = () => {
           await pc.setRemoteDescription(new RTCSessionDescription(data));
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
-          socket.emit("signal", from, socket.id, answer);
+          socket.emit("signal", from, mySocketIdRef.current, answer);
           // Informar nuestro estado de media al nuevo peer
-          socket.emit("signal", from, socket.id, {
+          socket.emit("signal", from, mySocketIdRef.current, {
             type: "media-state",
             isVideoOn: isVideoOnRef.current,
             isMicOn: isMicOnRef.current,
@@ -405,7 +484,7 @@ const Room: React.FC = () => {
           }
           await pc.setRemoteDescription(new RTCSessionDescription(data));
           // Informar nuestro estado de media al peer que respondió
-          socket.emit("signal", from, socket.id, {
+          socket.emit("signal", from, mySocketIdRef.current, {
             type: "media-state",
             isVideoOn: isVideoOnRef.current,
             isMicOn: isMicOnRef.current,
@@ -428,7 +507,7 @@ const Room: React.FC = () => {
       activeUsers: ActiveUser[];
     }) => {
       const { peerId, username } = data;
-      if (peerId === socket.id) return;
+      if (peerId === mySocketIdRef.current) return;
 
       console.log(`[new-peer-joined] ${username} (${peerId.slice(0, 5)})`);
 
@@ -441,9 +520,9 @@ const Room: React.FC = () => {
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
-        socket.emit("signal", peerId, socket.id, offer);
+        socket.emit("signal", peerId, mySocketIdRef.current, offer);
         // También enviar nuestro estado de media
-        socket.emit("signal", peerId, socket.id, {
+        socket.emit("signal", peerId, mySocketIdRef.current, {
           type: "media-state",
           isVideoOn: isVideoOnRef.current,
           isMicOn: isMicOnRef.current,
@@ -476,49 +555,36 @@ const Room: React.FC = () => {
 
     socket.on(
       "room-joined-success",
-      async (data: {
+      (data: {
         roomId: string;
         roomName: string;
         hostUid: string;
         activeUsers: ActiveUser[];
         mySocketId: string;
       }) => {
+        // ✅ FIX: usar mySocketId del servidor, nunca socket.id del cliente
+        const myId = data.mySocketId || socket.id || "";
         console.log(
-          `[room-joined-success] myId=${data.mySocketId} peers=${data.activeUsers.length}`,
+          `[room-joined-success] myId=${myId} peers=${data.activeUsers.length}`,
         );
-        mySocketIdRef.current = data.mySocketId;
+        mySocketIdRef.current = myId;
         setRoomName(data.roomName);
         setHostUid(data.hostUid);
         setActiveUsers(data.activeUsers);
         setIsValidating(false);
         setLoading(false);
 
-        // ✅ El peer NUEVO hace la offer a todos los que ya estaban en la sala
+        // ✅ Solo registrar usernames de peers existentes.
+        // Los peers EXISTENTES crean offers vía "new-peer-joined".
+        // NO crear offers aquí para evitar colisión de offers.
         const existingPeers = data.activeUsers.filter(
-          (u) => u.socketId && u.socketId !== data.mySocketId,
+          (u) => u.socketId && u.socketId !== myId,
         );
         console.log(
-          `[room-joined-success] haré offer a ${existingPeers.length} peer(s)`,
+          `[room-joined-success] ${existingPeers.length} peer(s) existentes (ellos harán offer)`,
         );
-
         for (const peer of existingPeers) {
           upsertRemote(peer.socketId, { username: peer.username });
-          try {
-            const pc = createPeerConnection(peer.socketId);
-            const offer = await pc.createOffer();
-            await pc.setLocalDescription(offer);
-            socket.emit("signal", peer.socketId, socket.id, offer);
-            socket.emit("signal", peer.socketId, socket.id, {
-              type: "media-state",
-              isVideoOn: isVideoOnRef.current,
-              isMicOn: isMicOnRef.current,
-            });
-          } catch (err) {
-            console.error(
-              `[room-joined-success] error offer a ${peer.socketId.slice(0, 5)}:`,
-              err,
-            );
-          }
         }
       },
     );
@@ -721,6 +787,46 @@ const Room: React.FC = () => {
 
       <div className="room-grid">
         <div className="room-stage">
+          {/* ── Banner de Permisos de Media ── */}
+          {(mediaPerms.video === "denied" || mediaPerms.audio === "denied") && (
+            <div className="media-permission-alert-banner">
+              <div className="media-permission-alert-icon">
+                <LuShieldAlert size={20} />
+              </div>
+              <div className="media-permission-alert-content">
+                <h4>Acceso denegado a la Cámara/Micrófono</h4>
+                <p>
+                  El navegador denegó el acceso a tu{" "}
+                  {mediaPerms.video === "denied" && mediaPerms.audio === "denied"
+                    ? "cámara y micrófono"
+                    : mediaPerms.video === "denied"
+                    ? "cámara"
+                    : "micrófono"}
+                  . Haz clic en el candado de la barra de direcciones de tu navegador para otorgar los permisos.
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* ── Status de Dispositivos ── */}
+          <div className="media-devices-status-panel">
+            <div className="media-device-status-item">
+              <span className={`status-dot ${mediaPerms.video === "granted" ? "status-dot--success" : "status-dot--danger"}`} />
+              <LuVideo size={14} />
+              <span>Cámara: {mediaPerms.video === "granted" ? "Conectada" : mediaPerms.video === "pending" ? "Pendiente" : "Bloqueada/No disponible"}</span>
+            </div>
+            <div className="media-device-status-item">
+              <span className={`status-dot ${mediaPerms.audio === "granted" ? "status-dot--success" : "status-dot--danger"}`} />
+              <LuMic size={14} />
+              <span>Micrófono: {mediaPerms.audio === "granted" ? "Conectado" : mediaPerms.audio === "pending" ? "Pendiente" : "Bloqueado/No disponible"}</span>
+            </div>
+            <div className="media-device-status-item media-device-status-item--webrtc">
+              <span className="status-dot status-dot--success" />
+              <LuWifi size={14} />
+              <span>Conexión WebRTC: Lista</span>
+            </div>
+          </div>
+
           <div className="room-video-container">
             {/* ── Video local ─────────────────────────────────────────────── */}
             <div
@@ -911,6 +1017,22 @@ const Room: React.FC = () => {
             </form>
           </div>
         </aside>
+      </div>
+
+      {/* ── Sistema de Toasts/Notificaciones ── */}
+      <div className="room-toasts-container">
+        {toasts.map((toast) => (
+          <div key={toast.id} className={`room-toast room-toast--${toast.type}`}>
+            <span className="room-toast-message">{toast.message}</span>
+            <button
+              onClick={() => removeToast(toast.id)}
+              className="room-toast-close-btn"
+              type="button"
+            >
+              <LuX size={14} />
+            </button>
+          </div>
+        ))}
       </div>
     </div>
   );
