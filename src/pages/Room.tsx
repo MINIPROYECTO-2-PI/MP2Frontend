@@ -217,7 +217,11 @@ const Room: React.FC = () => {
     audio: "pending" | "granted" | "denied";
   }>({ video: "pending", audio: "pending" });
   const [toasts, setToasts] = useState<
-    { id: string; type: "success" | "error" | "warning" | "info"; message: string }[]
+    {
+      id: string;
+      type: "success" | "error" | "warning" | "info";
+      message: string;
+    }[]
   >([]);
 
   // UN solo map que agrupa todo el estado remoto por peerId
@@ -293,7 +297,10 @@ const Room: React.FC = () => {
 
       // Intento 1: video + audio
       try {
-        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: true });
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: true,
+          audio: true,
+        });
         hasVideo = true;
         hasAudio = true;
       } catch (err: any) {
@@ -302,7 +309,10 @@ const Room: React.FC = () => {
         if (name === "NotAllowedError" || name === "PermissionDeniedError") {
           // Intentar solo audio
           try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: false,
+              audio: true,
+            });
             hasAudio = true;
           } catch {
             /* sin audio */
@@ -310,7 +320,10 @@ const Room: React.FC = () => {
           // Intentar solo video si no tenemos stream
           if (!stream) {
             try {
-              stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
               hasVideo = true;
             } catch {
               /* sin video */
@@ -319,14 +332,24 @@ const Room: React.FC = () => {
         } else {
           // Otro error (NotFoundError, etc) — intentar parciales
           try {
-            stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+            stream = await navigator.mediaDevices.getUserMedia({
+              video: false,
+              audio: true,
+            });
             hasAudio = true;
-          } catch { /* */ }
+          } catch {
+            /* */
+          }
           if (!stream) {
             try {
-              stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+              stream = await navigator.mediaDevices.getUserMedia({
+                video: true,
+                audio: false,
+              });
               hasVideo = true;
-            } catch { /* */ }
+            } catch {
+              /* */
+            }
           }
         }
       }
@@ -354,11 +377,20 @@ const Room: React.FC = () => {
       if (hasVideo && hasAudio) {
         addToast("success", "Cámara y micrófono conectados correctamente");
       } else if (hasVideo && !hasAudio) {
-        addToast("warning", "Cámara conectada · Micrófono denegado o no disponible");
+        addToast(
+          "warning",
+          "Cámara conectada · Micrófono denegado o no disponible",
+        );
       } else if (!hasVideo && hasAudio) {
-        addToast("warning", "Micrófono conectado · Cámara denegada o no disponible");
+        addToast(
+          "warning",
+          "Micrófono conectado · Cámara denegada o no disponible",
+        );
       } else {
-        addToast("error", "No se pudo acceder a cámara ni micrófono. Revisa los permisos del navegador.");
+        addToast(
+          "error",
+          "No se pudo acceder a cámara ni micrófono. Revisa los permisos del navegador.",
+        );
       }
 
       setMediaReady(true);
@@ -366,16 +398,26 @@ const Room: React.FC = () => {
     tryGetMedia();
     return () => {
       mounted = false;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  // ── 2. Limpieza del stream al desmontar el componente ───────────────────
+  useEffect(() => {
+    return () => {
+      console.log("[Room] Desmontando componente, deteniendo tracks locales...");
       localStreamRef.current?.getTracks().forEach((t) => t.stop());
       localStreamRef.current = null;
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 2. Vincular stream local al <video> ───────────────────────────────────
+  // ── 2.5 Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
     if (localVideoRef.current && localStream) {
       localVideoRef.current.srcObject = localStream;
+      localVideoRef.current.play().catch((err) => {
+        console.warn("[Room] Error al reproducir video local:", err);
+      });
     }
   }, [localStream]);
 
@@ -401,10 +443,15 @@ const Room: React.FC = () => {
       // ICE candidates
       pc.onicecandidate = ({ candidate }) => {
         if (candidate && socketRef.current) {
-          socketRef.current.emit("signal", remotePeerId, mySocketIdRef.current, {
-            type: "candidate",
-            candidate,
-          });
+          socketRef.current.emit(
+            "signal",
+            remotePeerId,
+            mySocketIdRef.current,
+            {
+              type: "candidate",
+              candidate,
+            },
+          );
         }
       };
 
@@ -704,6 +751,12 @@ const Room: React.FC = () => {
     setIsVideoOn(next);
     isVideoOnRef.current = next;
     broadcastMediaState(next, isMicOnRef.current);
+
+    if (next && localVideoRef.current) {
+      localVideoRef.current.play().catch((err) => {
+        console.warn("[Room] Error forzando play() en video local:", err);
+      });
+    }
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -814,12 +867,14 @@ const Room: React.FC = () => {
                 <h4>Acceso denegado a la Cámara/Micrófono</h4>
                 <p>
                   El navegador denegó el acceso a tu{" "}
-                  {mediaPerms.video === "denied" && mediaPerms.audio === "denied"
+                  {mediaPerms.video === "denied" &&
+                  mediaPerms.audio === "denied"
                     ? "cámara y micrófono"
                     : mediaPerms.video === "denied"
-                    ? "cámara"
-                    : "micrófono"}
-                  . Haz clic en el candado de la barra de direcciones de tu navegador para otorgar los permisos.
+                      ? "cámara"
+                      : "micrófono"}
+                  . Haz clic en el candado de la barra de direcciones de tu
+                  navegador para otorgar los permisos.
                 </p>
               </div>
             </div>
@@ -828,14 +883,32 @@ const Room: React.FC = () => {
           {/* ── Status de Dispositivos ── */}
           <div className="media-devices-status-panel">
             <div className="media-device-status-item">
-              <span className={`status-dot ${mediaPerms.video === "granted" ? "status-dot--success" : "status-dot--danger"}`} />
+              <span
+                className={`status-dot ${mediaPerms.video === "granted" ? "status-dot--success" : "status-dot--danger"}`}
+              />
               <LuVideo size={14} />
-              <span>Cámara: {mediaPerms.video === "granted" ? "Conectada" : mediaPerms.video === "pending" ? "Pendiente" : "Bloqueada/No disponible"}</span>
+              <span>
+                Cámara:{" "}
+                {mediaPerms.video === "granted"
+                  ? "Conectada"
+                  : mediaPerms.video === "pending"
+                    ? "Pendiente"
+                    : "Bloqueada/No disponible"}
+              </span>
             </div>
             <div className="media-device-status-item">
-              <span className={`status-dot ${mediaPerms.audio === "granted" ? "status-dot--success" : "status-dot--danger"}`} />
+              <span
+                className={`status-dot ${mediaPerms.audio === "granted" ? "status-dot--success" : "status-dot--danger"}`}
+              />
               <LuMic size={14} />
-              <span>Micrófono: {mediaPerms.audio === "granted" ? "Conectado" : mediaPerms.audio === "pending" ? "Pendiente" : "Bloqueado/No disponible"}</span>
+              <span>
+                Micrófono:{" "}
+                {mediaPerms.audio === "granted"
+                  ? "Conectado"
+                  : mediaPerms.audio === "pending"
+                    ? "Pendiente"
+                    : "Bloqueado/No disponible"}
+              </span>
             </div>
             <div className="media-device-status-item media-device-status-item--webrtc">
               <span className="status-dot status-dot--success" />
@@ -1039,7 +1112,10 @@ const Room: React.FC = () => {
       {/* ── Sistema de Toasts/Notificaciones ── */}
       <div className="room-toasts-container">
         {toasts.map((toast) => (
-          <div key={toast.id} className={`room-toast room-toast--${toast.type}`}>
+          <div
+            key={toast.id}
+            className={`room-toast room-toast--${toast.type}`}
+          >
             <span className="room-toast-message">{toast.message}</span>
             <button
               onClick={() => removeToast(toast.id)}
