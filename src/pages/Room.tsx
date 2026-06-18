@@ -25,28 +25,20 @@ import {
 } from "react-icons/lu";
 
 // ─── Configuración WebRTC ─────────────────────────────────────────────────────
+// FIX: Removidos los TURN servers de openrelay.metered.ca — son poco confiables
+// y causan ICE checking → disconnected inmediato. Usar servidores STUN de Google
+// es suficiente para la mayoría de redes. Si hay NAT simétrico, añadir TURN propio.
 const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    // ── TURN gratuito para pruebas (Open Relay) ──
-    {
-      urls: "turn:openrelay.metered.ca:80",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
-    {
-      urls: "turn:openrelay.metered.ca:443?transport=tcp",
-      username: "openrelayproject",
-      credential: "openrelayproject",
-    },
+    { urls: "stun:stun2.l.google.com:19302" },
+    { urls: "stun:stun3.l.google.com:19302" },
+    { urls: "stun:stun4.l.google.com:19302" },
   ],
   iceCandidatePoolSize: 10,
+  bundlePolicy: "max-bundle",
+  rtcpMuxPolicy: "require",
 };
 
 // ─── Interfaces ───────────────────────────────────────────────────────────────
@@ -131,7 +123,8 @@ const RemoteVideo: React.FC<{
     ?.getVideoTracks()
     .some((t) => t.enabled && t.readyState === "live");
 
-  // ✅ useEffect en vez de callback ref — se ejecuta después de que el DOM está estable
+  // FIX: Un solo useEffect con dependencia en state.stream — evita bucle infinito
+  // del useEffect sin array de dependencias que había antes.
   useEffect(() => {
     const el = videoRef.current;
     if (!el || !state.stream) return;
@@ -139,14 +132,6 @@ const RemoteVideo: React.FC<{
     el.srcObject = state.stream;
     el.play().catch(() => {});
   }, [state.stream]);
-
-  useEffect(() => {
-    const el = videoRef.current;
-    if (!el || !state.stream) return;
-    if (el.srcObject === state.stream) return;
-    el.srcObject = state.stream;
-    el.play().catch(() => {});
-  });
 
   const showVideo = hasVideoTrack && !!state.stream;
 
@@ -219,12 +204,19 @@ const Room: React.FC = () => {
   // refs que no deben re-renderizar
   const localStreamRef = useRef<MediaStream | null>(null);
   const peerConnectionsRef = useRef<Map<string, RTCPeerConnection>>(new Map());
+  // FIX: Cola de ICE candidates pendientes por peer — evita perder candidates
+  // que llegan antes de que setRemoteDescription termine.
+  const pendingCandidatesRef = useRef<Map<string, RTCIceCandidateInit[]>>(
+    new Map(),
+  );
   const localVideoRef = useRef<HTMLVideoElement>(null);
   const socketRef = useRef<Socket | null>(null);
   const chatEndRef = useRef<HTMLDivElement | null>(null);
   const mySocketIdRef = useRef<string>("");
   const isVideoOnRef = useRef(true);
   const isMicOnRef = useRef(true);
+  // FIX: Ref para saber si el componente sigue montado — evita setState en unmount
+  const mountedRef = useRef(true);
 
   // estado de UI
   const [loading, setLoading] = useState(true);
@@ -240,7 +232,6 @@ const Room: React.FC = () => {
   const [copied, setCopied] = useState(false);
   const [localStream, setLocalStream] = useState<MediaStream | null>(null);
 
-  // ── Estado de permisos de media ────────────────────────────────────────────
   const [mediaReady, setMediaReady] = useState(false);
   const [mediaPerms, setMediaPerms] = useState<{
     video: "pending" | "granted" | "denied";
@@ -254,14 +245,21 @@ const Room: React.FC = () => {
     }[]
   >([]);
 
-  // UN solo map que agrupa todo el estado remoto por peerId
   const [remotes, setRemotes] = useState<Map<string, RemoteState>>(new Map());
 
   const isLocalSpeaking = useIsSpeaking(localStream, !isMicOn);
 
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+    };
+  }, []);
+
   // ── Helpers de estado remoto ──────────────────────────────────────────────
   const upsertRemote = useCallback(
     (peerId: string, patch: Partial<RemoteState>) => {
+      if (!mountedRef.current) return;
       setRemotes((prev) => {
         const next = new Map(prev);
         const existing = next.get(peerId) ?? {
@@ -278,6 +276,7 @@ const Room: React.FC = () => {
   );
 
   const removeRemote = useCallback((peerId: string) => {
+    if (!mountedRef.current) return;
     setRemotes((prev) => {
       const next = new Map(prev);
       next.delete(peerId);
@@ -285,7 +284,7 @@ const Room: React.FC = () => {
     });
   }, []);
 
-  // ── Broadcast estado de media a todos los peers conectados ────────────────
+  // ── Broadcast estado de media ─────────────────────────────────────────────
   const broadcastMediaState = useCallback(
     (videoOn: boolean, micOn: boolean) => {
       const socket = socketRef.current;
@@ -301,7 +300,7 @@ const Room: React.FC = () => {
     [],
   );
 
-  // ── Helper para toasts ──────────────────────────────────────────────────────
+  // ── Toasts ────────────────────────────────────────────────────────────────
   const addToast = useCallback(
     (type: "success" | "error" | "warning" | "info", message: string) => {
       const id = `toast-${Date.now()}-${Math.random()}`;
@@ -317,7 +316,7 @@ const Room: React.FC = () => {
     setToasts((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
-  // ── 1. Obtener media con feedback de permisos ─────────────────────────────
+  // ── 1. Obtener media ──────────────────────────────────────────────────────
   useEffect(() => {
     let mounted = true;
     let activeStream: MediaStream | null = null;
@@ -327,7 +326,6 @@ const Room: React.FC = () => {
       let hasAudio = false;
       let stream: MediaStream | null = null;
 
-      // Intento 1: video + audio
       try {
         stream = await navigator.mediaDevices.getUserMedia({
           video: true,
@@ -337,9 +335,7 @@ const Room: React.FC = () => {
         hasAudio = true;
       } catch (err: any) {
         const name = err?.name || "";
-        // Si fue denegado explícitamente, intentar por separado
         if (name === "NotAllowedError" || name === "PermissionDeniedError") {
-          // Intentar solo audio
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: false,
@@ -349,7 +345,6 @@ const Room: React.FC = () => {
           } catch {
             /* sin audio */
           }
-          // Intentar solo video si no tenemos stream
           if (!stream) {
             try {
               stream = await navigator.mediaDevices.getUserMedia({
@@ -362,7 +357,6 @@ const Room: React.FC = () => {
             }
           }
         } else {
-          // Otro error (NotFoundError, etc) — intentar parciales
           try {
             stream = await navigator.mediaDevices.getUserMedia({
               video: false,
@@ -391,17 +385,14 @@ const Room: React.FC = () => {
         return;
       }
 
-      // Detectar tracks reales obtenidos
       if (stream) {
         activeStream = stream;
         hasVideo = stream.getVideoTracks().length > 0;
         hasAudio = stream.getAudioTracks().length > 0;
 
-        // Mantener activos los tracks por defecto para que la persona pueda verse
         localStreamRef.current = stream;
         setLocalStream(stream);
 
-        // Inicializar el estado de controles de acuerdo con el hardware real obtenido
         setIsVideoOn(hasVideo);
         isVideoOnRef.current = hasVideo;
         setIsMicOn(hasAudio);
@@ -413,7 +404,6 @@ const Room: React.FC = () => {
         isMicOnRef.current = false;
       }
 
-      // Actualizar permisos y mostrar toasts
       setMediaPerms({
         video: hasVideo ? "granted" : "denied",
         audio: hasAudio ? "granted" : "denied",
@@ -434,7 +424,7 @@ const Room: React.FC = () => {
       } else {
         addToast(
           "error",
-          "No se pudo acceder a cámara ni micrófono. Revisa los permisos del navegador.",
+          "No se pudo acceder a cámara ni micrófono. Revisa los permisos.",
         );
       }
 
@@ -446,45 +436,48 @@ const Room: React.FC = () => {
     return () => {
       mounted = false;
       if (activeStream) {
-        console.log("[Room] Limpiando tracks locales del efecto actual...");
         activeStream.getTracks().forEach((t) => t.stop());
       }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // ── 2.5 Vincular stream local al <video> ───────────────────────────────────
+  // ── 2. Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
-    if (loading) return; // ← esperar a que el DOM principal esté listo
+    if (loading) return;
     if (!localStream) return;
     const video = localVideoRef.current;
     if (!video) return;
     if (video.srcObject === localStream) return;
-
     video.srcObject = localStream;
     video.play().catch(() => {});
   }, [localStream, loading]);
 
   // ── 3. Crear peer connection ──────────────────────────────────────────────
+  // FIX: La función ahora recibe el stream como parámetro en vez de leerlo
+  // del ref — garantiza que siempre use el stream correcto en el momento de
+  // creación, incluso si localStreamRef.current todavía es null por timing.
   const createPeerConnection = useCallback(
-    (remotePeerId: string): RTCPeerConnection => {
-      // Cerrar la anterior si existe
+    (remotePeerId: string, stream: MediaStream | null): RTCPeerConnection => {
       const old = peerConnectionsRef.current.get(remotePeerId);
       if (old) {
         old.close();
         peerConnectionsRef.current.delete(remotePeerId);
       }
 
+      // FIX: Limpiar cola de ICE candidates al recrear la conexión
+      pendingCandidatesRef.current.delete(remotePeerId);
+
       const pc = new RTCPeerConnection(RTC_CONFIG);
 
-      // Añadir tracks locales
-      if (localStreamRef.current) {
-        localStreamRef.current.getTracks().forEach((track) => {
-          pc.addTrack(track, localStreamRef.current!);
+      // FIX: Añadir tracks usando el stream recibido como parámetro,
+      // no localStreamRef.current que puede ser null en este momento.
+      if (stream) {
+        stream.getTracks().forEach((track) => {
+          pc.addTrack(track, stream);
         });
       }
 
-      // ICE candidates
       pc.onicecandidate = ({ candidate }) => {
         if (candidate && socketRef.current) {
           socketRef.current.emit(
@@ -499,28 +492,73 @@ const Room: React.FC = () => {
         }
       };
 
-      // Tracks remotos entrantes
-      pc.ontrack = ({ streams }) => {
-        const stream = streams[0];
+      // FIX: ontrack maneja múltiples tracks del mismo stream correctamente.
+      // Antes solo se usaba streams[0] sin verificar si era el stream correcto.
+      pc.ontrack = (event) => {
+        const stream = event.streams[0];
         if (!stream) return;
+
+        // Actualizar el stream remoto — si ya existe, React compara por referencia
         upsertRemote(remotePeerId, { stream });
+
+        // FIX: Escuchar cambios en los tracks del stream remoto (e.g. cuando
+        // el otro peer activa/desactiva cámara o mic después de conectado)
+        stream.onaddtrack = () => {
+          upsertRemote(remotePeerId, { stream });
+        };
+        stream.onremovetrack = () => {
+          upsertRemote(remotePeerId, { stream });
+        };
       };
 
-      // Cambios de estado ICE
       pc.oniceconnectionstatechange = () => {
         const s = pc.iceConnectionState;
         console.log(`[ICE:${remotePeerId.slice(0, 5)}] ${s}`);
-        if (s === "failed" || s === "disconnected" || s === "closed") {
-          pc.close();
-          peerConnectionsRef.current.delete(remotePeerId);
-          // No borrar de remotes aquí — esperar a userDisconnected del servidor
+        if (s === "failed") {
+          // FIX: En fallo ICE intentar reiniciar negociación en vez de cerrar
+          console.warn(
+            `[ICE:${remotePeerId.slice(0, 5)}] Fallo ICE — intentando restartIce`,
+          );
+          pc.restartIce();
         }
+        if (s === "closed") {
+          peerConnectionsRef.current.delete(remotePeerId);
+          pendingCandidatesRef.current.delete(remotePeerId);
+        }
+      };
+
+      // FIX: Loggear estado de conexión para diagnóstico más claro
+      pc.onconnectionstatechange = () => {
+        console.log(
+          `[PC:${remotePeerId.slice(0, 5)}] connectionState=${pc.connectionState}`,
+        );
       };
 
       peerConnectionsRef.current.set(remotePeerId, pc);
       return pc;
     },
     [upsertRemote],
+  );
+
+  // ── FIX: Función para drenar la cola de ICE candidates pendientes ─────────
+  // Los candidates pueden llegar vía socket ANTES de que setRemoteDescription
+  // termine. Si se llama addIceCandidate sin remoteDescription, falla silenciosamente.
+  const drainPendingCandidates = useCallback(
+    async (peerId: string, pc: RTCPeerConnection) => {
+      const queue = pendingCandidatesRef.current.get(peerId) ?? [];
+      pendingCandidatesRef.current.delete(peerId);
+      for (const candidate of queue) {
+        try {
+          await pc.addIceCandidate(new RTCIceCandidate(candidate));
+        } catch (err) {
+          console.warn(
+            `[ICE queue] error añadiendo candidate para ${peerId.slice(0, 5)}:`,
+            err,
+          );
+        }
+      }
+    },
+    [],
   );
 
   // ── 4. Lógica principal de socket ─────────────────────────────────────────
@@ -547,7 +585,6 @@ const Room: React.FC = () => {
     const onSignal = async (_to: string, from: string, data: any) => {
       if (from === mySocketIdRef.current) return;
 
-      // Mensaje de estado de media (no es WebRTC estándar)
       if (data.type === "media-state") {
         upsertRemote(from, {
           isVideoOn: !!data.isVideoOn,
@@ -556,26 +593,49 @@ const Room: React.FC = () => {
         return;
       }
 
-      // Obtener o crear peer connection
+      // FIX: Al obtener/crear la PC, pasar el stream actual del ref.
+      // createPeerConnection ahora lo recibe como parámetro.
       let pc = peerConnectionsRef.current.get(from);
-      if (!pc) pc = createPeerConnection(from);
+      if (!pc) {
+        pc = createPeerConnection(from, localStreamRef.current);
+      }
 
       try {
         if (data.type === "offer") {
+          // FIX: Si ya hay una offer local pendiente (glare/colisión), el peer
+          // con socketId lexicográficamente mayor se retira (rollback).
+          if (pc.signalingState === "have-local-offer") {
+            if (mySocketIdRef.current > from) {
+              // Yo me retiro: rollback y acepto la offer del otro
+              await pc.setLocalDescription({ type: "rollback" });
+            } else {
+              // El otro se retirará — ignorar esta offer
+              console.warn(
+                `[offer] Glare detectado — ignorando offer de ${from.slice(0, 5)}`,
+              );
+              return;
+            }
+          }
+
           if (
             pc.signalingState !== "stable" &&
             pc.signalingState !== "have-remote-offer"
           ) {
             console.warn(
-              `[offer] signalingState inesperado: ${pc.signalingState}`,
+              `[offer] signalingState inesperado: ${pc.signalingState} — ignorando`,
             );
             return;
           }
+
           await pc.setRemoteDescription(new RTCSessionDescription(data));
+
+          // FIX: Drenar candidates pendientes DESPUÉS de setRemoteDescription
+          await drainPendingCandidates(from, pc);
+
           const answer = await pc.createAnswer();
           await pc.setLocalDescription(answer);
           socket.emit("signal", from, mySocketIdRef.current, answer);
-          // Informar nuestro estado de media al nuevo peer
+
           socket.emit("signal", from, mySocketIdRef.current, {
             type: "media-state",
             isVideoOn: isVideoOnRef.current,
@@ -584,20 +644,36 @@ const Room: React.FC = () => {
         } else if (data.type === "answer") {
           if (pc.signalingState !== "have-local-offer") {
             console.warn(
-              `[answer] signalingState inesperado: ${pc.signalingState}`,
+              `[answer] signalingState inesperado: ${pc.signalingState} — ignorando`,
             );
             return;
           }
           await pc.setRemoteDescription(new RTCSessionDescription(data));
-          // Informar nuestro estado de media al peer que respondió
+
+          // FIX: Drenar candidates pendientes DESPUÉS de setRemoteDescription
+          await drainPendingCandidates(from, pc);
+
           socket.emit("signal", from, mySocketIdRef.current, {
             type: "media-state",
             isVideoOn: isVideoOnRef.current,
             isMicOn: isMicOnRef.current,
           });
-        } else if (data.candidate) {
+        } else if (data.type === "candidate" && data.candidate) {
+          // FIX: Si remoteDescription todavía no está lista, encolar el candidate
+          // en vez de descartarlo. Se drena cuando llega offer/answer.
           if (pc.remoteDescription) {
-            await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+            try {
+              await pc.addIceCandidate(new RTCIceCandidate(data.candidate));
+            } catch (err) {
+              console.warn(`[ICE] error añadiendo candidate:`, err);
+            }
+          } else {
+            console.log(
+              `[ICE] Encolando candidate para ${from.slice(0, 5)} (sin remoteDesc aún)`,
+            );
+            const queue = pendingCandidatesRef.current.get(from) ?? [];
+            queue.push(data.candidate);
+            pendingCandidatesRef.current.set(from, queue);
           }
         }
       } catch (err) {
@@ -605,7 +681,7 @@ const Room: React.FC = () => {
       }
     };
 
-    // ── Nuevo peer en la sala → los peers EXISTENTES crean la offer ───────
+    // ── Nuevo peer en la sala ─────────────────────────────────────────────
     const onNewPeer = async (data: {
       peerId: string;
       username: string;
@@ -617,17 +693,15 @@ const Room: React.FC = () => {
 
       console.log(`[new-peer-joined] ${username} (${peerId.slice(0, 5)})`);
 
-      // Registrar username aunque todavía no haya stream
       upsertRemote(peerId, { username });
       setActiveUsers(data.activeUsers);
 
-      // ✅ CRÍTICO: los peers EXISTENTES son quienes hacen la offer
-      const pc = createPeerConnection(peerId);
+      // FIX: Pasar localStreamRef.current explícitamente al crear la PC
+      const pc = createPeerConnection(peerId, localStreamRef.current);
       try {
         const offer = await pc.createOffer();
         await pc.setLocalDescription(offer);
         socket.emit("signal", peerId, mySocketIdRef.current, offer);
-        // También enviar nuestro estado de media
         socket.emit("signal", peerId, mySocketIdRef.current, {
           type: "media-state",
           isVideoOn: isVideoOnRef.current,
@@ -638,7 +712,7 @@ const Room: React.FC = () => {
       }
     };
 
-    // ── Peer se desconectó ────────────────────────────────────────────────
+    // ── Peer desconectado ────────────────────────────────────────────────
     const onUserDisconnected = (peerId: string) => {
       console.log(`[userDisconnected] ${peerId.slice(0, 5)}`);
       const pc = peerConnectionsRef.current.get(peerId);
@@ -646,15 +720,22 @@ const Room: React.FC = () => {
         pc.close();
         peerConnectionsRef.current.delete(peerId);
       }
+      pendingCandidatesRef.current.delete(peerId);
       removeRemote(peerId);
     };
 
-    // ── Registrar TODOS los listeners ANTES de emitir join-room ──────────
     socket.on("signal", onSignal);
     socket.on("new-peer-joined", onNewPeer);
     socket.on("userDisconnected", onUserDisconnected);
 
     socket.on("delete-room", (data: { message: string }) => {
+      alert(data.message);
+      navigate("/dashboard");
+    });
+
+    // FIX: El servidor desconecta sesiones duplicadas del mismo uid.
+    // Si el usuario tenía la sala abierta en otra pestaña, llega este evento.
+    socket.on("session-replaced", (data: { message: string }) => {
       alert(data.message);
       navigate("/dashboard");
     });
@@ -668,7 +749,6 @@ const Room: React.FC = () => {
         activeUsers: ActiveUser[];
         mySocketId: string;
       }) => {
-        // ✅ FIX: usar mySocketId del servidor, nunca socket.id del cliente
         const myId = data.mySocketId || socket.id || "";
         console.log(
           `[room-joined-success] myId=${myId} peers=${data.activeUsers.length}`,
@@ -684,14 +764,11 @@ const Room: React.FC = () => {
         setIsValidating(false);
         setLoading(false);
 
-        // ✅ Solo registrar usernames de peers existentes.
-        // Los peers EXISTENTES crean offers vía "new-peer-joined".
-        // NO crear offers aquí para evitar colisión de offers.
         const existingPeers = data.activeUsers.filter(
           (u) => u.socketId && u.socketId !== myId,
         );
         console.log(
-          `[room-joined-success] ${existingPeers.length} peer(s) existentes (ellos harán offer)`,
+          `[room-joined-success] ${existingPeers.length} peer(s) existentes`,
         );
         for (const peer of existingPeers) {
           upsertRemote(peer.socketId, { username: peer.username });
@@ -747,7 +824,6 @@ const Room: React.FC = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
-    // ✅ Emitir join-room DESPUÉS de registrar todos los listeners, controlando reconexiones
     socket.on("connect", handleConnect);
     if (socket.connected) {
       handleConnect();
@@ -756,6 +832,7 @@ const Room: React.FC = () => {
     return () => {
       peerConnectionsRef.current.forEach((pc) => pc.close());
       peerConnectionsRef.current.clear();
+      pendingCandidatesRef.current.clear();
       setRemotes(new Map());
 
       socket.off("connect", handleConnect);
@@ -763,6 +840,7 @@ const Room: React.FC = () => {
       socket.off("new-peer-joined", onNewPeer);
       socket.off("userDisconnected", onUserDisconnected);
       socket.off("delete-room");
+      socket.off("session-replaced");
       socket.off("room-joined-success");
       socket.off("room-invalid");
       socket.off("error-msg");
@@ -901,7 +979,6 @@ const Room: React.FC = () => {
 
       <div className="room-grid">
         <div className="room-stage">
-          {/* ── Banner de Permisos de Media ── */}
           {(mediaPerms.video === "denied" || mediaPerms.audio === "denied") && (
             <div className="media-permission-alert-banner">
               <div className="media-permission-alert-icon">
@@ -924,7 +1001,6 @@ const Room: React.FC = () => {
             </div>
           )}
 
-          {/* ── Status de Dispositivos ── */}
           <div className="media-devices-status-panel">
             <div className="media-device-status-item">
               <span
@@ -962,7 +1038,7 @@ const Room: React.FC = () => {
           </div>
 
           <div className="room-video-container">
-            {/* ── Video local ─────────────────────────────────────────────── */}
+            {/* ── Video local ──────────────────────────────────────────── */}
             <div
               className={`room-video-card${isLocalSpeaking ? " speaking" : ""}`}
             >
@@ -1033,13 +1109,12 @@ const Room: React.FC = () => {
               </div>
             </div>
 
-            {/* ── Videos remotos — uno por entrada en `remotes` ────────────── */}
+            {/* ── Videos remotos ────────────────────────────────────────── */}
             {Array.from(remotes.entries()).map(([peerId, state]) => (
               <RemoteVideo key={peerId} peerId={peerId} state={state} />
             ))}
           </div>
 
-          {/* ── Controles ─────────────────────────────────────────────────── */}
           <div className="room-controls-bar">
             <button
               onClick={toggleMic}
@@ -1064,7 +1139,7 @@ const Room: React.FC = () => {
           </div>
         </div>
 
-        {/* ── Sidebar ──────────────────────────────────────────────────────── */}
+        {/* ── Sidebar ──────────────────────────────────────────────────── */}
         <aside className="room-sidebar">
           <div className="room-sidebar-section room-users-section">
             <div className="section-header">
@@ -1153,7 +1228,7 @@ const Room: React.FC = () => {
         </aside>
       </div>
 
-      {/* ── Sistema de Toasts/Notificaciones ── */}
+      {/* ── Toasts ─────────────────────────────────────────────────────── */}
       <div className="room-toasts-container">
         {toasts.map((toast) => (
           <div
