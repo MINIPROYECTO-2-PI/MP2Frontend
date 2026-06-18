@@ -29,7 +29,22 @@ const RTC_CONFIG: RTCConfiguration = {
   iceServers: [
     { urls: "stun:stun.l.google.com:19302" },
     { urls: "stun:stun1.l.google.com:19302" },
-    { urls: "stun:stun2.l.google.com:19302" },
+    // ── TURN gratuito para pruebas (Open Relay) ──
+    {
+      urls: "turn:openrelay.metered.ca:80",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
+    {
+      urls: "turn:openrelay.metered.ca:443?transport=tcp",
+      username: "openrelayproject",
+      credential: "openrelayproject",
+    },
   ],
   iceCandidatePoolSize: 10,
 };
@@ -124,6 +139,14 @@ const RemoteVideo: React.FC<{
     el.srcObject = state.stream;
     el.play().catch(() => {});
   }, [state.stream]);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !state.stream) return;
+    if (el.srcObject === state.stream) return;
+    el.srcObject = state.stream;
+    el.play().catch(() => {});
+  });
 
   const showVideo = hasVideoTrack && !!state.stream;
 
@@ -432,14 +455,15 @@ const Room: React.FC = () => {
 
   // ── 2.5 Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
+    if (loading) return; // ← esperar a que el DOM principal esté listo
     if (!localStream) return;
     const video = localVideoRef.current;
     if (!video) return;
-    if (video.srcObject === localStream) return; // ← agregar esta línea
+    if (video.srcObject === localStream) return;
 
     video.srcObject = localStream;
     video.play().catch(() => {});
-  }, [localStream]);
+  }, [localStream, loading]);
 
   // ── 3. Crear peer connection ──────────────────────────────────────────────
   const createPeerConnection = useCallback(
