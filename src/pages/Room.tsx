@@ -713,6 +713,10 @@ const Room: React.FC = () => {
     };
 
     // ── Peer desconectado ────────────────────────────────────────────────
+    // FIX: Pequeño delay antes de limpiar el remote del estado visual.
+    // Cuando un peer recarga, llegan en ráfaga: userDisconnected (socket viejo)
+    // seguido de new-peer-joined (nuevo socketId). Sin el delay, hay riesgo de
+    // que el estado visual parpadee. La PC se cierra inmediatamente igual.
     const onUserDisconnected = (peerId: string) => {
       console.log(`[userDisconnected] ${peerId.slice(0, 5)}`);
       const pc = peerConnectionsRef.current.get(peerId);
@@ -721,7 +725,7 @@ const Room: React.FC = () => {
         peerConnectionsRef.current.delete(peerId);
       }
       pendingCandidatesRef.current.delete(peerId);
-      removeRemote(peerId);
+      setTimeout(() => removeRemote(peerId), 800);
     };
 
     socket.on("signal", onSignal);
@@ -770,8 +774,42 @@ const Room: React.FC = () => {
         console.log(
           `[room-joined-success] ${existingPeers.length} peer(s) existentes`,
         );
+
+        // FIX: Al entrar (o recargar), el recién llegado debe iniciar la
+        // conexión con cada peer existente. Antes solo se registraba el username
+        // pero NO se creaba la PC ni se mandaba offer — así que si el otro peer
+        // no detectaba el new-peer-joined a tiempo (p.ej. por evict+rejoin rápido),
+        // la conexión nunca arrancaba.
+        //
+        // Estrategia: el recién llegado manda offer a TODOS los peers existentes.
+        // Los peers existentes reciben new-peer-joined y también mandan offer.
+        // El glare (colisión de offers) lo resuelve el handler de "offer" con rollback.
         for (const peer of existingPeers) {
           upsertRemote(peer.socketId, { username: peer.username });
+          // Crear PC y mandar offer al peer existente
+          const pc = createPeerConnection(
+            peer.socketId,
+            localStreamRef.current,
+          );
+          pc.createOffer()
+            .then((offer) => pc.setLocalDescription(offer).then(() => offer))
+            .then((offer) => {
+              socket.emit("signal", peer.socketId, myId, offer);
+              socket.emit("signal", peer.socketId, myId, {
+                type: "media-state",
+                isVideoOn: isVideoOnRef.current,
+                isMicOn: isMicOnRef.current,
+              });
+              console.log(
+                `[room-joined-success] offer enviada a peer existente ${peer.socketId.slice(0, 5)}`,
+              );
+            })
+            .catch((err) => {
+              console.error(
+                `[room-joined-success] error creando offer para ${peer.socketId.slice(0, 5)}:`,
+                err,
+              );
+            });
         }
       },
     );
