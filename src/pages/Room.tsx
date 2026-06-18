@@ -1,4 +1,10 @@
-import React, { useEffect, useState, useRef, useCallback } from "react";
+import React, {
+  useEffect,
+  useState,
+  useRef,
+  useCallback,
+  Component,
+} from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
 import {
@@ -109,6 +115,47 @@ function useIsSpeaking(stream: MediaStream | null, muted: boolean): boolean {
   }, [stream, muted]);
 
   return speaking;
+}
+
+// ─── ErrorBoundary para tarjetas de video ────────────────────────────────────
+// Evita que un crash en un <video> remoto (p.ej. el NotFoundError de insertBefore
+// en mobile) tire toda la sala. El error queda contenido en esa tarjeta.
+class VideoErrorBoundary extends Component<
+  { children: React.ReactNode; peerId: string },
+  { hasError: boolean }
+> {
+  constructor(props: any) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error) {
+    console.warn(
+      "[VideoErrorBoundary] Error en tarjeta de video:",
+      error.message,
+    );
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="room-video-card">
+          <div className="room-video-placeholder">
+            <div className="room-video-avatar-fallback">
+              <LuUser size={40} />
+            </div>
+            <span className="room-video-name">Participante</span>
+            <span className="room-status-sub">Error de video</span>
+          </div>
+        </div>
+      );
+    }
+    return this.props.children;
+  }
 }
 
 // ─── Tarjeta de video remoto ──────────────────────────────────────────────────
@@ -900,23 +947,34 @@ const Room: React.FC = () => {
   const toggleMic = () => {
     const next = !isMicOn;
     localStreamRef.current?.getAudioTracks().forEach((t) => (t.enabled = next));
-    setIsMicOn(next);
     isMicOnRef.current = next;
     broadcastMediaState(isVideoOnRef.current, next);
+    // Defer setState un frame igual que toggleVideo — consistencia en mobile
+    requestAnimationFrame(() => {
+      setIsMicOn(next);
+    });
   };
 
   const toggleVideo = () => {
     const next = !isVideoOn;
+    // FIX: Deshabilitar el track ANTES de actualizar el estado de React.
+    // En mobile, si el track se deshabilita al mismo tiempo que React
+    // re-renderiza, el browser puede estar en medio de un recalculo de layout
+    // (teclado virtual, scroll) causando el crash de insertBefore.
+    // Separar la operación del track del setState con rAF evita la colisión.
     localStreamRef.current?.getVideoTracks().forEach((t) => (t.enabled = next));
-    setIsVideoOn(next);
     isVideoOnRef.current = next;
     broadcastMediaState(next, isMicOnRef.current);
 
-    if (next && localVideoRef.current) {
-      localVideoRef.current.play().catch((err) => {
-        console.warn("[Room] Error forzando play() en video local:", err);
-      });
-    }
+    // Defer el setState un frame para que el browser termine el layout actual
+    requestAnimationFrame(() => {
+      setIsVideoOn(next);
+      if (next && localVideoRef.current) {
+        localVideoRef.current.play().catch((err) => {
+          console.warn("[Room] Error forzando play() en video local:", err);
+        });
+      }
+    });
   };
 
   const handleSendMessage = (e: React.FormEvent) => {
@@ -1149,7 +1207,9 @@ const Room: React.FC = () => {
 
             {/* ── Videos remotos ────────────────────────────────────────── */}
             {Array.from(remotes.entries()).map(([peerId, state]) => (
-              <RemoteVideo key={peerId} peerId={peerId} state={state} />
+              <VideoErrorBoundary key={peerId} peerId={peerId}>
+                <RemoteVideo peerId={peerId} state={state} />
+              </VideoErrorBoundary>
             ))}
           </div>
 
