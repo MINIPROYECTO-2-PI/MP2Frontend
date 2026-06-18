@@ -446,6 +446,7 @@ const Room: React.FC = () => {
     if (!localStream) return;
     const video = localVideoRef.current;
     if (!video) return;
+    if (video.srcObject === localStream) return; // ← agregar esta línea
 
     video.srcObject = localStream;
     video.play().catch(() => {});
@@ -953,13 +954,7 @@ const Room: React.FC = () => {
               className={`room-video-card${isLocalSpeaking ? " speaking" : ""}`}
             >
               <video
-                ref={(el) => {
-                  localVideoRef.current = el;
-                  if (el && localStream) {
-                    el.srcObject = localStream;
-                    el.play().catch(() => {});
-                  }
-                }}
+                ref={localVideoRef}
                 autoPlay
                 muted
                 playsInline
