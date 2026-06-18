@@ -277,6 +277,13 @@ const Dashboard: React.FC = () => {
               </p>
             </div>
             <button
+              onClick={() => navigate("/join")}
+              className="dashboard-join-btn"
+            >
+              <LuDoorOpen size={18} />
+              Unirse a Sala
+            </button>
+            <button
               onClick={() => setShowCreateForm(true)}
               className="dashboard-create-btn"
             >

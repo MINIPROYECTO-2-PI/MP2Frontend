@@ -721,8 +721,12 @@
 
 .dashboard-create-btn { display:flex; align-items:center; gap:8px; padding:12px 24px; border-radius:14px; font-size:.9rem; font-weight:650; border:none; cursor:pointer; background:linear-gradient(135deg,#4f46e5,#7c3aed); color:white; box-shadow:0 4px 20px rgba(99,102,241,.4); transition:all .25s; }
 .dashboard-create-btn:hover { transform:translateY(-2px); box-shadow:0 8px 28px rgba(99,102,241,.55); }
+
 .dashboard-create-btn--large { padding:16px 32px; font-size:1rem; margin-top:12px; }
 
+.dashboard-join-btn { display:flex; align-items:center; gap:8px; padding:12px 24px; border-radius:14px; font-size:.9rem; font-weight:650; border:none; cursor:pointer; background:rgba(255,255,255,.08); color:white; backdrop-filter:blur(8px); border:1px solid rgba(255,255,255,.1); transition:all .25s; }
+
+.dashboard-join-btn:hover { transform:translateY(-2px); background:rgba(255,255,255,.14); border-color:rgba(255,255,255,.2); }
 .dashboard-create-card { background:rgba(15,12,32,.6); backdrop-filter:blur(24px); border:1px solid rgba(99,102,241,.2); border-radius:20px; padding:28px 32px; margin-bottom:28px; animation:auth-slide-up .4s cubic-bezier(.16,1,.3,1); }
 .dashboard-create-header { display:flex; align-items:center; gap:10px; margin-bottom:18px; font-size:1.05rem; font-weight:700; color:white; }
 .dashboard-create-icon { color:#a5b4fc; }
@@ -769,6 +773,7 @@
   .dashboard-nav-inner { flex-wrap:wrap; gap:12px; }
   .dashboard-header { flex-direction:column; align-items:stretch; }
   .dashboard-create-btn { width:100%; justify-content:center; }
+  .dashboard-join-btn { width:100%; justify-content:center; }
 }
 
 /* ═══════════════════════════════════════════════
