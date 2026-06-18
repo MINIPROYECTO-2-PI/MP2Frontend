@@ -116,24 +116,13 @@ const RemoteVideo: React.FC<{
     ?.getVideoTracks()
     .some((t) => t.enabled && t.readyState === "live");
 
-  const setVideoRef = useCallback(
-    (el: HTMLVideoElement | null) => {
-      (videoRef as React.RefObject<HTMLVideoElement | null>).current = el;
-      if (el && state.stream) {
-        el.srcObject = state.stream;
-        el.play().catch(() => {});
-      }
-    },
-    [state.stream],
-  );
-
+  // ✅ useEffect en vez de callback ref — se ejecuta después de que el DOM está estable
   useEffect(() => {
     const el = videoRef.current;
     if (!el || !state.stream) return;
-    if (el.srcObject !== state.stream) {
-      el.srcObject = state.stream;
-      el.play().catch(() => {});
-    }
+    if (el.srcObject === state.stream) return;
+    el.srcObject = state.stream;
+    el.play().catch(() => {});
   }, [state.stream]);
 
   const showVideo = hasVideoTrack && !!state.stream;
@@ -141,7 +130,7 @@ const RemoteVideo: React.FC<{
   return (
     <div className={`room-video-card${speaking ? " speaking" : ""}`}>
       <video
-        ref={setVideoRef}
+        ref={videoRef}
         autoPlay
         playsInline
         className={`room-video-feed${showVideo ? "" : " room-video-feed--hidden"}`}
