@@ -191,6 +191,24 @@
 
 ---
 
+### C9 — Camera/Microphone Permission Handler
+
+**Estado: ✅ Completado**
+
+| Tarea | Estado | Notas |
+|-------|--------|-------|
+| Handler robusto de permisos de cámara y micrófono | ✅ | Fallbacks escalonados, toasts, alertas UX |
+| Estados de permiso denegados/concedidos/pendientes | ✅ | UI precisa basada en tracks reales |
+| Alertas contextuales en Room UI | ✅ | Alertas con nivel de severidad y llamadas a la acción |
+
+**Decisiones UX:**
+- Fallbacks escalonados para `getUserMedia`: primero video+audio, luego audio solo, luego video solo
+- Estados de botón basados en tracks reales (`stream.getVideoTracks().length > 0`) para precisión
+- Alertas contextuales con ícono `LuShieldAlert` para permisos denegados
+- Toasts con auto-dismiss para diferentes niveles de severidad
+
+---
+
 ### Tiempo estimado vs real
 
 | Actividad | Estimado | Real |

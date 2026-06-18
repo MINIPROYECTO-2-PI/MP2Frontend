@@ -112,18 +112,36 @@ const RemoteVideo: React.FC<{
   const videoRef = useRef<HTMLVideoElement>(null);
   const speaking = useIsSpeaking(state.stream, !state.isMicOn);
 
+  const hasVideoTrack = state.stream
+    ?.getVideoTracks()
+    .some((t) => t.enabled && t.readyState === "live");
+
+  const setVideoRef = useCallback(
+    (el: HTMLVideoElement | null) => {
+      (videoRef as React.RefObject<HTMLVideoElement | null>).current = el;
+      if (el && state.stream) {
+        el.srcObject = state.stream;
+        el.play().catch(() => {});
+      }
+    },
+    [state.stream],
+  );
+
   useEffect(() => {
-    if (videoRef.current && state.stream) {
-      videoRef.current.srcObject = state.stream;
+    const el = videoRef.current;
+    if (!el || !state.stream) return;
+    if (el.srcObject !== state.stream) {
+      el.srcObject = state.stream;
+      el.play().catch(() => {});
     }
   }, [state.stream]);
 
-  const showVideo = state.isVideoOn && !!state.stream;
+  const showVideo = hasVideoTrack && !!state.stream;
 
   return (
     <div className={`room-video-card${speaking ? " speaking" : ""}`}>
       <video
-        ref={videoRef}
+        ref={setVideoRef}
         autoPlay
         playsInline
         className={`room-video-feed${showVideo ? "" : " room-video-feed--hidden"}`}
@@ -425,14 +443,13 @@ const Room: React.FC = () => {
 
   // ── 2.5 Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
-    if (localVideoRef.current && localStream) {
-      console.log("[Room] Vinculando stream local al elemento video...");
-      localVideoRef.current.srcObject = localStream;
-      localVideoRef.current.play().catch((err) => {
-        console.warn("[Room] Error al reproducir video local:", err);
-      });
-    }
-  }, [localStream, loading]);
+    if (!localStream) return;
+    const video = localVideoRef.current;
+    if (!video) return;
+
+    video.srcObject = localStream;
+    video.play().catch(() => {});
+  }, [localStream]);
 
   // ── 3. Crear peer connection ──────────────────────────────────────────────
   const createPeerConnection = useCallback(
@@ -936,7 +953,13 @@ const Room: React.FC = () => {
               className={`room-video-card${isLocalSpeaking ? " speaking" : ""}`}
             >
               <video
-                ref={localVideoRef}
+                ref={(el) => {
+                  localVideoRef.current = el;
+                  if (el && localStream) {
+                    el.srcObject = localStream;
+                    el.play().catch(() => {});
+                  }
+                }}
                 autoPlay
                 muted
                 playsInline
