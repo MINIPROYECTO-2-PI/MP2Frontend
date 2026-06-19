@@ -667,6 +667,34 @@ const Room: React.FC = () => {
     video.play().catch(() => {});
   }, [localStream, loading, isScreenSharing]);
 
+  // ── 2b. FIX iOS Autoplay: Forzar reproducción de videos al cambiar de estado ──
+  useEffect(() => {
+    const timer = setTimeout(() => {
+      const videos = document.querySelectorAll("video");
+      videos.forEach((video) => {
+        if (video.srcObject) {
+          video.play().catch((err) => {
+            console.warn("[iOS Autoplay Fix] Error al reanudar video:", err);
+          });
+        }
+      });
+    }, 300);
+    return () => clearTimeout(timer);
+  }, [isVideoOn, isScreenSharing]);
+
+  const renegotiate = useCallback(async (peerId: string) => {
+    const pc = peerConnectionsRef.current.get(peerId);
+    if (!pc) return;
+    try {
+      console.log(`[renegotiate] Reiniciando ICE para ${peerId.slice(0, 5)}...`);
+      const offer = await pc.createOffer({ iceRestart: true });
+      await pc.setLocalDescription(offer);
+      socketRef.current?.emit("signal", peerId, mySocketIdRef.current, offer);
+    } catch (err) {
+      console.error(`[renegotiate] Error en renegotiate:`, err);
+    }
+  }, []);
+
   // ── 3. Crear peer connection ──────────────────────────────────────────────
   // FIX: La función ahora recibe el stream como parámetro en vez de leerlo
   // del ref — garantiza que siempre use el stream correcto en el momento de
@@ -728,12 +756,11 @@ const Room: React.FC = () => {
       pc.oniceconnectionstatechange = () => {
         const s = pc.iceConnectionState;
         console.log(`[ICE:${remotePeerId.slice(0, 5)}] ${s}`);
-        if (s === "failed") {
-          // FIX: En fallo ICE intentar reiniciar negociación en vez de cerrar
+        if (s === "failed" || s === "disconnected") {
           console.warn(
-            `[ICE:${remotePeerId.slice(0, 5)}] Fallo ICE — intentando restartIce`,
+            `[ICE:${remotePeerId.slice(0, 5)}] Fallo o desconexión ICE — intentando restartIce`,
           );
-          pc.restartIce();
+          renegotiate(remotePeerId);
         }
         if (s === "closed") {
           peerConnectionsRef.current.delete(remotePeerId);
@@ -909,21 +936,6 @@ const Room: React.FC = () => {
 
       upsertRemote(peerId, { username });
       setActiveUsers(data.activeUsers);
-
-      // FIX: Pasar localStreamRef.current explícitamente al crear la PC
-      const pc = createPeerConnection(peerId, localStreamRef.current);
-      try {
-        const offer = await pc.createOffer();
-        await pc.setLocalDescription(offer);
-        socket.emit("signal", peerId, mySocketIdRef.current, offer);
-        socket.emit("signal", peerId, mySocketIdRef.current, {
-          type: "media-state",
-          isVideoOn: isVideoOnRef.current,
-          isMicOn: isMicOnRef.current,
-        });
-      } catch (err) {
-        console.error(`[new-peer-joined] error creando offer:`, err);
-      }
     };
 
     // ── Peer desconectado ────────────────────────────────────────────────
