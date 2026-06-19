@@ -7,6 +7,7 @@ import React, {
 } from "react";
 import { useParams, useNavigate } from "react-router-dom";
 import { useAuth } from "../contexts/AuthContext";
+import { LuMonitor, LuMonitorOff } from "react-icons/lu";
 import {
   connectSocket,
   disconnectSocket,
@@ -242,6 +243,53 @@ const RemoteVideo: React.FC<{
   );
 };
 
+// ─── Componentes auxiliares para Presentación ────────────────────────────────
+const PresenterVideo: React.FC<{ stream: MediaStream }> = ({ stream }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !stream) return;
+    if (el.srcObject === stream) return;
+    el.srcObject = stream;
+    el.play().catch(() => {});
+  }, [stream]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      playsInline
+      className="room-screen-feed"
+    />
+  );
+};
+
+const LocalCameraPreview: React.FC<{
+  stream: MediaStream | null;
+  isVideoOn: boolean;
+}> = ({ stream, isVideoOn }) => {
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    const el = videoRef.current;
+    if (!el || !stream) return;
+    if (el.srcObject === stream) return;
+    el.srcObject = stream;
+    el.play().catch(() => {});
+  }, [stream]);
+
+  return (
+    <video
+      ref={videoRef}
+      autoPlay
+      muted
+      playsInline
+      className={`room-video-feed${isVideoOn ? "" : " room-video-feed--hidden"}`}
+    />
+  );
+};
+
 // ─── Componente principal ─────────────────────────────────────────────────────
 const Room: React.FC = () => {
   const { roomId } = useParams<{ roomId: string }>();
@@ -264,8 +312,16 @@ const Room: React.FC = () => {
   const isMicOnRef = useRef(true);
   // FIX: Ref para saber si el componente sigue montado — evita setState en unmount
   const mountedRef = useRef(true);
+  const screenStreamRef = useRef<MediaStream | null>(null);
+  // Track original de cámara — NUNCA se sobreescribe después de asignarse
+  const cameraTrackRef = useRef<MediaStreamTrack | null>(null);
+  // Estado de video previo al compartir pantalla
+  const wasVideoOnBeforeScreenShare = useRef(true);
 
   // estado de UI
+  const [isScreenSharing, setIsScreenSharing] = useState(false);
+  // quién está compartiendo pantalla (null = nadie)
+  const [sharingPeerId, setSharingPeerId] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [isValidating, setIsValidating] = useState(true);
   const [errorMsg, setErrorMsg] = useState("");
@@ -303,6 +359,139 @@ const Room: React.FC = () => {
     };
   }, []);
 
+  // ── Toasts ────────────────────────────────────────────────────────────────
+  const addToast = useCallback(
+    (type: "success" | "error" | "warning" | "info", message: string) => {
+      const id = `toast-${Date.now()}-${Math.random()}`;
+      setToasts((prev) => [...prev, { id, type, message }]);
+      setTimeout(() => {
+        setToasts((prev) => prev.filter((t) => t.id !== id));
+      }, 5000);
+    },
+    [],
+  );
+
+  const removeToast = useCallback((id: string) => {
+    setToasts((prev) => prev.filter((t) => t.id !== id));
+  }, []);
+
+  // ── Broadcast estado de media ─────────────────────────────────────────────
+  const broadcastMediaState = useCallback(
+    (videoOn: boolean, micOn: boolean) => {
+      const socket = socketRef.current;
+      if (!socket) return;
+      peerConnectionsRef.current.forEach((_, peerId) => {
+        socket.emit("signal", peerId, mySocketIdRef.current, {
+          type: "media-state",
+          isVideoOn: videoOn,
+          isMicOn: micOn,
+        });
+      });
+    },
+    [],
+  );
+
+  const stopScreenShare = useCallback(() => {
+    const screenStream = screenStreamRef.current;
+    if (screenStream) {
+      screenStream.getTracks().forEach((t) => t.stop());
+      screenStreamRef.current = null;
+    }
+
+    // Restaurar el track de cámara en todas las PeerConnections
+    const camTrack = cameraTrackRef.current;
+    if (camTrack) {
+      peerConnectionsRef.current.forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        if (sender) {
+          sender.replaceTrack(camTrack);
+        }
+      });
+    }
+
+    // Restaurar preview local al stream de cámara
+    if (localVideoRef.current && localStreamRef.current) {
+      localVideoRef.current.srcObject = localStreamRef.current;
+    }
+
+    // Restaurar estado previo de video
+    const restoreVideo = wasVideoOnBeforeScreenShare.current;
+    if (camTrack) {
+      camTrack.enabled = restoreVideo;
+    }
+    isVideoOnRef.current = restoreVideo;
+
+    // Notificar al servidor que dejamos de compartir
+    if (socketRef.current && roomId) {
+      socketRef.current.emit("screen-share-stop", { roomId });
+    }
+
+    requestAnimationFrame(() => {
+      setIsScreenSharing(false);
+      setIsVideoOn(restoreVideo);
+    });
+    broadcastMediaState(restoreVideo, isMicOnRef.current);
+  }, [roomId, broadcastMediaState]);
+
+  const startScreenShare = useCallback(async () => {
+    // Verificar con el servidor que no haya otro presenter
+    if (!socketRef.current || !roomId) return;
+
+    try {
+      const screenStream = await navigator.mediaDevices.getDisplayMedia({
+        video: true,
+        audio: false,
+      });
+
+      // Guardar estado previo de video ANTES de compartir
+      wasVideoOnBeforeScreenShare.current = isVideoOnRef.current;
+
+      screenStreamRef.current = screenStream;
+      const screenTrack = screenStream.getVideoTracks()[0];
+
+      // Reemplazar el track de video en cada PeerConnection activa
+      peerConnectionsRef.current.forEach((pc) => {
+        const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+        if (sender) {
+          sender.replaceTrack(screenTrack);
+        }
+      });
+
+      // Actualizar preview local
+      if (localVideoRef.current) {
+        localVideoRef.current.srcObject = screenStream;
+      }
+
+      // Notificar al servidor
+      socketRef.current.emit("screen-share-start", { roomId });
+
+      requestAnimationFrame(() => {
+        setIsScreenSharing(true);
+        setIsVideoOn(true);
+      });
+      isVideoOnRef.current = true;
+      broadcastMediaState(true, isMicOnRef.current);
+
+      // Cuando el usuario usa el botón nativo del browser "Detener"
+      screenTrack.onended = () => {
+        stopScreenShare();
+      };
+    } catch (err: any) {
+      if (err?.name !== "NotAllowedError") {
+        console.error("[screenShare] Error:", err);
+        addToast("error", "No se pudo iniciar la compartición de pantalla");
+      }
+    }
+  }, [roomId, broadcastMediaState, addToast, stopScreenShare]);
+
+  const toggleScreenShare = useCallback(async () => {
+    if (isScreenSharing) {
+      stopScreenShare();
+    } else {
+      await startScreenShare();
+    }
+  }, [isScreenSharing, stopScreenShare, startScreenShare]);
+
   // ── Helpers de estado remoto ──────────────────────────────────────────────
   const upsertRemote = useCallback(
     (peerId: string, patch: Partial<RemoteState>) => {
@@ -331,37 +520,6 @@ const Room: React.FC = () => {
     });
   }, []);
 
-  // ── Broadcast estado de media ─────────────────────────────────────────────
-  const broadcastMediaState = useCallback(
-    (videoOn: boolean, micOn: boolean) => {
-      const socket = socketRef.current;
-      if (!socket) return;
-      peerConnectionsRef.current.forEach((_, peerId) => {
-        socket.emit("signal", peerId, mySocketIdRef.current, {
-          type: "media-state",
-          isVideoOn: videoOn,
-          isMicOn: micOn,
-        });
-      });
-    },
-    [],
-  );
-
-  // ── Toasts ────────────────────────────────────────────────────────────────
-  const addToast = useCallback(
-    (type: "success" | "error" | "warning" | "info", message: string) => {
-      const id = `toast-${Date.now()}-${Math.random()}`;
-      setToasts((prev) => [...prev, { id, type, message }]);
-      setTimeout(() => {
-        setToasts((prev) => prev.filter((t) => t.id !== id));
-      }, 5000);
-    },
-    [],
-  );
-
-  const removeToast = useCallback((id: string) => {
-    setToasts((prev) => prev.filter((t) => t.id !== id));
-  }, []);
 
   // ── 1. Obtener media ──────────────────────────────────────────────────────
   useEffect(() => {
@@ -440,6 +598,12 @@ const Room: React.FC = () => {
         localStreamRef.current = stream;
         setLocalStream(stream);
 
+        // Guardar el track original de cámara UNA SOLA VEZ
+        const videoTrack = stream.getVideoTracks()[0];
+        if (videoTrack && !cameraTrackRef.current) {
+          cameraTrackRef.current = videoTrack;
+        }
+
         setIsVideoOn(hasVideo);
         isVideoOnRef.current = hasVideo;
         setIsMicOn(hasAudio);
@@ -492,13 +656,16 @@ const Room: React.FC = () => {
   // ── 2. Vincular stream local al <video> ───────────────────────────────────
   useEffect(() => {
     if (loading) return;
-    if (!localStream) return;
     const video = localVideoRef.current;
     if (!video) return;
-    if (video.srcObject === localStream) return;
-    video.srcObject = localStream;
+
+    const expectedStream = isScreenSharing ? screenStreamRef.current : localStream;
+    if (!expectedStream) return;
+
+    if (video.srcObject === expectedStream) return;
+    video.srcObject = expectedStream;
     video.play().catch(() => {});
-  }, [localStream, loading]);
+  }, [localStream, loading, isScreenSharing]);
 
   // ── 3. Crear peer connection ──────────────────────────────────────────────
   // FIX: La función ahora recibe el stream como parámetro en vez de leerlo
@@ -799,6 +966,7 @@ const Room: React.FC = () => {
         hostUid: string;
         activeUsers: ActiveUser[];
         mySocketId: string;
+        currentPresenter?: string | null;
       }) => {
         const myId = data.mySocketId || socket.id || "";
         console.log(
@@ -814,6 +982,11 @@ const Room: React.FC = () => {
         setActiveUsers(data.activeUsers);
         setIsValidating(false);
         setLoading(false);
+
+        // Si ya hay alguien compartiendo pantalla al entrar
+        if (data.currentPresenter) {
+          setSharingPeerId(data.currentPresenter);
+        }
 
         const existingPeers = data.activeUsers.filter(
           (u) => u.socketId && u.socketId !== myId,
@@ -909,12 +1082,60 @@ const Room: React.FC = () => {
       setMessages((prev) => [...prev, msg]);
     });
 
+    // ── Screen share exclusiva ──────────────────────────────────────────
+    socket.on("screen-share-started", (data: { peerId: string }) => {
+      setSharingPeerId(data.peerId);
+    });
+
+    socket.on("screen-share-stopped", () => {
+      setSharingPeerId(null);
+    });
+
+    socket.on("screen-share-denied", () => {
+      // Detener el stream que ya obtuvimos con getDisplayMedia
+      const scr = screenStreamRef.current;
+      if (scr) {
+        scr.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current = null;
+      }
+      // Restaurar cámara en los senders
+      const camTrack = cameraTrackRef.current;
+      if (camTrack) {
+        peerConnectionsRef.current.forEach((pc) => {
+          const sender = pc.getSenders().find((s) => s.track?.kind === "video");
+          if (sender) sender.replaceTrack(camTrack);
+        });
+      }
+      // Restaurar preview local
+      if (localVideoRef.current && localStreamRef.current) {
+        localVideoRef.current.srcObject = localStreamRef.current;
+      }
+      const restoreVideo = wasVideoOnBeforeScreenShare.current;
+      if (camTrack) camTrack.enabled = restoreVideo;
+      isVideoOnRef.current = restoreVideo;
+      requestAnimationFrame(() => {
+        setIsScreenSharing(false);
+        setIsVideoOn(restoreVideo);
+      });
+      broadcastMediaState(restoreVideo, isMicOnRef.current);
+      addToast("error", "Ya hay alguien compartiendo pantalla");
+    });
+
     socket.on("connect", handleConnect);
     if (socket.connected) {
       handleConnect();
     }
 
     return () => {
+      // Cleanup screen share si estamos compartiendo al desmontar
+      if (screenStreamRef.current) {
+        screenStreamRef.current.getTracks().forEach((t) => t.stop());
+        screenStreamRef.current = null;
+        if (roomId) {
+          socket.emit("screen-share-stop", { roomId });
+        }
+      }
+
       peerConnectionsRef.current.forEach((pc) => pc.close());
       peerConnectionsRef.current.clear();
       pendingCandidatesRef.current.clear();
@@ -933,6 +1154,9 @@ const Room: React.FC = () => {
       socket.off("user-joined");
       socket.off("user-left");
       socket.off("receive-message");
+      socket.off("screen-share-started");
+      socket.off("screen-share-stopped");
+      socket.off("screen-share-denied");
       disconnectSocket();
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -956,13 +1180,14 @@ const Room: React.FC = () => {
   };
 
   const toggleVideo = () => {
+    // No tocar video si estamos compartiendo pantalla
+    if (isScreenSharing) return;
     const next = !isVideoOn;
-    // FIX: Deshabilitar el track ANTES de actualizar el estado de React.
-    // En mobile, si el track se deshabilita al mismo tiempo que React
-    // re-renderiza, el browser puede estar en medio de un recalculo de layout
-    // (teclado virtual, scroll) causando el crash de insertBefore.
-    // Separar la operación del track del setState con rAF evita la colisión.
-    localStreamRef.current?.getVideoTracks().forEach((t) => (t.enabled = next));
+    // FIX: Usar cameraTrackRef directamente — NO tocar localStreamRef ni screenStreamRef.
+    // Esto evita que al desactivar cámara mientras se comparte pantalla se pierda la referencia.
+    if (cameraTrackRef.current) {
+      cameraTrackRef.current.enabled = next;
+    }
     isVideoOnRef.current = next;
     broadcastMediaState(next, isMicOnRef.current);
 
@@ -1074,7 +1299,7 @@ const Room: React.FC = () => {
       </header>
 
       <div className="room-grid">
-        <div className="room-stage">
+        <div className={`room-stage${sharingPeerId ? " room-stage--sharing" : ""}`}>
           {(mediaPerms.video === "denied" || mediaPerms.audio === "denied") && (
             <div className="media-permission-alert-banner">
               <div className="media-permission-alert-icon">
@@ -1133,7 +1358,102 @@ const Room: React.FC = () => {
             </div>
           </div>
 
-          <div className="room-video-container">
+          {/* Determine who is the presenter */}
+          {(() => {
+            const isPresenting = sharingPeerId !== null;
+            const iAmPresenter = sharingPeerId === mySocketIdRef.current;
+            // Find the presenter's video (remote or local)
+            const presenterRemote = sharingPeerId ? remotes.get(sharingPeerId) : null;
+            // All participant cards (local + remotes) go to the strip when presenting
+            return isPresenting ? (
+              /* ── SCREEN SHARE LAYOUT (Google Meet style) ── */
+              <div className="room-screenshare-layout">
+                {/* Main stage: screen share */}
+                <div className="room-stage-main">
+                  {iAmPresenter ? (
+                    <video
+                      ref={localVideoRef}
+                      autoPlay
+                      muted
+                      playsInline
+                      className="room-screen-feed"
+                    />
+                  ) : presenterRemote?.stream ? (
+                    <PresenterVideo stream={presenterRemote.stream} />
+                  ) : (
+                    <div className="room-screen-placeholder">
+                      <LuMonitor size={48} />
+                      <span>Esperando pantalla compartida...</span>
+                    </div>
+                  )}
+                  <div className="room-presenter-badge">
+                    <LuMonitor size={14} />
+                    <span>
+                      {iAmPresenter
+                        ? "Tú estás presentando"
+                        : `${presenterRemote?.username || "Participante"} está presentando`}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Participants strip */}
+                <div className="room-participants-strip">
+                  {/* Local video card (small) */}
+                  {iAmPresenter ? (
+                    /* When I'm presenter, show camera preview from localStreamRef */
+                    <div className={`room-video-card room-strip-card${isLocalSpeaking ? " speaking" : ""}`}>
+                      <LocalCameraPreview
+                        stream={localStreamRef.current}
+                        isVideoOn={!isScreenSharing ? isVideoOn : wasVideoOnBeforeScreenShare.current}
+                      />
+                      {!(isScreenSharing ? wasVideoOnBeforeScreenShare.current : isVideoOn) && (
+                        <div className="room-video-placeholder">
+                          <div className="room-video-avatar-fallback" style={{ width: 40, height: 40, fontSize: "1rem" }}>
+                            {user?.displayName?.charAt(0).toUpperCase() || <LuUser size={20} />}
+                          </div>
+                        </div>
+                      )}
+                      <div className="room-participant-labels">
+                        <span className="participant-badge-name">Tú</span>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className={`room-video-card room-strip-card${isLocalSpeaking ? " speaking" : ""}`}>
+                      <video
+                        ref={localVideoRef}
+                        autoPlay
+                        muted
+                        playsInline
+                        className={`room-video-feed${isVideoOn ? "" : " room-video-feed--hidden"}`}
+                      />
+                      {!isVideoOn && (
+                        <div className="room-video-placeholder">
+                          <div className="room-video-avatar-fallback" style={{ width: 40, height: 40, fontSize: "1rem" }}>
+                            {user?.displayName?.charAt(0).toUpperCase() || <LuUser size={20} />}
+                          </div>
+                        </div>
+                      )}
+                      <div className="room-participant-labels">
+                        <span className="participant-badge-name">Tú</span>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Remote video cards (small, skip presenter) */}
+                  {Array.from(remotes.entries())
+                    .filter(([pid]) => pid !== sharingPeerId)
+                    .map(([peerId, state]) => (
+                      <VideoErrorBoundary key={peerId} peerId={peerId}>
+                        <div className="room-strip-card">
+                          <RemoteVideo peerId={peerId} state={state} />
+                        </div>
+                      </VideoErrorBoundary>
+                    ))}
+                </div>
+              </div>
+            ) : (
+              /* ── GRID LAYOUT (default, no screen share) ── */
+              <div className="room-video-container">
             {/* ── Video local ──────────────────────────────────────────── */}
             <div
               className={`room-video-card${isLocalSpeaking ? " speaking" : ""}`}
@@ -1205,13 +1525,14 @@ const Room: React.FC = () => {
               </div>
             </div>
 
-            {/* ── Videos remotos ────────────────────────────────────────── */}
             {Array.from(remotes.entries()).map(([peerId, state]) => (
               <VideoErrorBoundary key={peerId} peerId={peerId}>
                 <RemoteVideo peerId={peerId} state={state} />
               </VideoErrorBoundary>
             ))}
           </div>
+            );
+          })()}
 
           <div className="room-controls-bar">
             <button
@@ -1233,6 +1554,32 @@ const Room: React.FC = () => {
             >
               {isVideoOn ? <LuVideo size={20} /> : <LuVideoOff size={20} />}
               <span>{isVideoOn ? "Cámara Activa" : "Cámara Off"}</span>
+            </button>
+            <button
+              onClick={toggleScreenShare}
+              disabled={
+                !localStream ||
+                (sharingPeerId !== null && sharingPeerId !== mySocketIdRef.current)
+              }
+              className={`room-control-btn ${
+                isScreenSharing
+                  ? "room-control-btn--sharing"
+                  : "room-control-btn--muted"
+              }`}
+              title={
+                sharingPeerId !== null && sharingPeerId !== mySocketIdRef.current
+                  ? "Alguien más está compartiendo pantalla"
+                  : isScreenSharing
+                    ? "Detener compartición"
+                    : "Compartir pantalla"
+              }
+            >
+              {isScreenSharing ? (
+                <LuMonitorOff size={20} />
+              ) : (
+                <LuMonitor size={20} />
+              )}
+              <span>{isScreenSharing ? "Detener" : "Pantalla"}</span>
             </button>
           </div>
         </div>
